@@ -1,0 +1,25 @@
+2026-04-05 01:04:18,998 | INFO | Logging to reports/beta_baseline_20260405_010418/training.log
+2026-04-05 01:04:18,998 | INFO | ======================================================================
+2026-04-05 01:04:18,998 | INFO | BETA BASELINE TRAINING
+2026-04-05 01:04:18,998 | INFO | ======================================================================
+2026-04-05 01:04:18,998 | INFO | Experiment: beta_baseline_20260405_010418
+2026-04-05 01:04:18,998 | INFO | Sample fraction: 0.05
+2026-04-05 01:04:18,998 | INFO | Early stopping: 100 rounds
+2026-04-05 01:04:18,998 | INFO | Learning rate: 0.01
+2026-04-05 01:04:18,998 | INFO | Max trees: 1500
+2026-04-05 01:04:18,998 | INFO | Output directory: reports/beta_baseline_20260405_010418
+2026-04-05 01:04:18,998 | INFO | ======================================================================
+2026-04-05 01:04:18,998 | INFO | 
+[PHASE 1] Loading CASAS data...
+2026-04-05 01:04:19,000 | INFO | Found 30 homes
+2026-04-05 01:04:19,000 | INFO | Limited to 3 homes for testing
+2026-04-05 01:04:19,021 | INFO | Phase 1 complete: 0.0s
+2026-04-05 01:04:19,021 | INFO | 
+[PHASE 2] Preprocessing features...
+2026-04-05 01:04:19,029 | INFO | Sampling 5% of data...
+2026-04-05 01:04:21,769 | INFO | Sampled 44,685 from 893,718 total samples
+2026-04-05 01:04:21,771 | INFO | Features after preprocessing: 63
+2026-04-05 01:04:21,772 | INFO | Phase 2 complete: 2.8s
+2026-04-05 01:04:21,772 | INFO | 
+[PHASE 3] Starting leave-one-out cross-validation...
+2026-04-05 01:04:21,773 | INFO | Starting leave-one-out CV across 3 homes

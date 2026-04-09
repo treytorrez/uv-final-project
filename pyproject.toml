@@ -1,0 +1,80 @@
+[project]
+name = "uv-final-project"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "ipykernel>=7.2.0",
+    "ipynotebook>=0.1.0",
+    "jupyter>=1.1.1",
+    "lets-plot>=4.9.0",
+    "matplotlib>=3.10.8",
+    "notebook>=7.5.5",
+    "numpy>=2.4.4",
+    "pandas>=3.0.2",
+    "polars>=1.39.3",
+    "pyarrow>=23.0.1",
+    "pydantic-settings>=2.13.1",
+    "pyright>=1.1.408",
+    "scikit-learn>=1.8.0",
+    "seaborn>=0.13.2",
+    "tensorflow>=2.21.0",
+    "xgboost>=3.2.0",
+]
+
+[dependency-groups]
+dev = [
+    "mypy>=1.20.0",
+    "ruff>=0.15.9",
+    "pydantic[mypy]>=2.12.5",
+    "pytest>=8.0.0",
+]
+
+# ── Ruff ──────────────────────────────────────────────────────────────────────
+[tool.ruff]
+target-version = "py313"
+
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle errors
+    "F",    # pyflakes — undefined names, unused imports
+    "I",    # isort — import ordering
+    "N",    # pep8 naming conventions
+    "UP",   # pyupgrade — enforce modern python syntax
+    "ANN",  # type annotation enforcement
+    "D",    # pydocstyle — docstring presence and format
+    "B",    # bugbear — common mistakes and code smells
+    "SIM",  # simplify — flag redundant code patterns
+    "TCH",  # move type-only imports into TYPE_CHECKING block
+    "RUF",  # ruff-specific rules
+    "C90",  # flag overly complex functions
+]
+ignore = [
+    "ANN101",  # self doesn't need a type annotation
+    "ANN102",  # cls doesn't need a type annotation
+    "D100",    # module-level docstrings not required
+    "D104",    # __init__.py docstrings not required
+    "D203",    # conflicts with D211
+    "D213",    # conflicts with D212
+]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"   # Google-style docstrings — matches mkdocstrings
+
+[tool.ruff.lint.mccabe]
+max-complexity = 10     # flag functions with cyclomatic complexity > 10
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+docstring-code-format = true   # also format code blocks inside docstrings
+
+# ── Mypy ──────────────────────────────────────────────────────────────────────
+[tool.mypy]
+strict = true
+plugins = ["pydantic.mypy"]
+warn_unreachable = true       # flag dead code after return/raise
+warn_unused_ignores = true    # flag unnecessary # type: ignore comments
+
+
