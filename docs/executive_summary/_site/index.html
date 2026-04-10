@@ -163,15 +163,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#metrics-saved-training-runs" id="toc-metrics-saved-training-runs" class="nav-link" data-scroll-target="#metrics-saved-training-runs">Metrics (Saved Training Runs)</a>
   <ul class="collapse">
   <li><a href="#best-model-current-leader" id="toc-best-model-current-leader" class="nav-link" data-scroll-target="#best-model-current-leader">Best model (current leader)</a></li>
-  <li><a href="#best-model-notes" id="toc-best-model-notes" class="nav-link" data-scroll-target="#best-model-notes">Best Model Notes</a></li>
   </ul></li>
   <li><a href="#risks-limitations-and-what-would-make-it-better" id="toc-risks-limitations-and-what-would-make-it-better" class="nav-link" data-scroll-target="#risks-limitations-and-what-would-make-it-better">Risks, Limitations, and What Would Make It Better</a></li>
   <li><a href="#recommendation" id="toc-recommendation" class="nav-link" data-scroll-target="#recommendation">Recommendation</a></li>
-  <li><a href="#render-publish" id="toc-render-publish" class="nav-link" data-scroll-target="#render-publish">Render &amp; Publish</a>
-  <ul class="collapse">
-  <li><a href="#local-render" id="toc-local-render" class="nav-link" data-scroll-target="#local-render">Local render</a></li>
-  <li><a href="#github-pages" id="toc-github-pages" class="nav-link" data-scroll-target="#github-pages">GitHub Pages</a></li>
-  </ul></li>
   </ul>
 </nav>
 </nav>
@@ -225,19 +219,19 @@ DRAFT NOTE (remove for final)
 <!-- REMOVE_FOR_FINAL:END mockup -->
 <div class="es-metrics">
 <div class="es-card">
-<pre><code>&lt;div class="kicker"&gt;Targets considered&lt;/div&gt;
-&lt;div class="value"&gt;41 specific / 11 generalized&lt;/div&gt;
-&lt;div class="note"&gt;Generalized labels reduce sparsity and imbalance.&lt;/div&gt;</code></pre>
+<pre><code>&lt;div class="kicker"&gt;Recommended target&lt;/div&gt;
+&lt;div class="value"&gt;Generalized (11 classes)&lt;/div&gt;
+&lt;div class="note"&gt;More stable learning under class imbalance.&lt;/div&gt;</code></pre>
 </div>
 <div class="es-card">
-<pre><code>&lt;div class="kicker"&gt;Best quick baseline (macro-F1)&lt;/div&gt;
-&lt;div class="value"&gt;0.720&lt;/div&gt;
-&lt;div class="note"&gt;For &lt;code&gt;activity_general&lt;/code&gt; (row-level CV).&lt;/div&gt;</code></pre>
+<pre><code>&lt;div class="kicker"&gt;Current leader (CV macro-F1)&lt;/div&gt;
+&lt;div class="value"&gt;0.777&lt;/div&gt;
+&lt;div class="note"&gt;Best saved run for the generalized target.&lt;/div&gt;</code></pre>
 </div>
 <div class="es-card">
-<pre><code>&lt;div class="kicker"&gt;Dataset&lt;/div&gt;
-&lt;div class="value"&gt;30 homes&lt;/div&gt;
-&lt;div class="note"&gt;Each row is a sliding window of 30 sensor events.&lt;/div&gt;</code></pre>
+<pre><code>&lt;div class="kicker"&gt;Data representation&lt;/div&gt;
+&lt;div class="value"&gt;30-event windows&lt;/div&gt;
+&lt;div class="note"&gt;30 homes; 36 numeric features per window.&lt;/div&gt;</code></pre>
 </div>
 </div>
 <section id="executive-summary" class="level2">
@@ -368,161 +362,96 @@ models/meta_sklearn_&lt;target&gt;_f1_macro_&lt;score&gt;_&lt;timestamp&gt;.json
 </section>
 <section id="metrics-saved-training-runs" class="level2">
 <h2 class="anchored" data-anchor-id="metrics-saved-training-runs">Metrics (Saved Training Runs)</h2>
-<p>The table below is auto-generated from the saved run metadata in <code>models/meta_*.json</code> (refresh via <code>python docs/executive_summary/tools/generate_model_metrics_md.py</code>). It reflects the <strong>primary CV score</strong> used during training-time model selection (currently macro-F1). CV folds and split strategy can vary across runs; where available, the table includes the number of folds.</p>
+<p>The table below is auto-generated from the saved run metadata in <code>models/meta_*.json</code> (refresh via <code>python docs/executive_summary/tools/generate_model_metrics_md.py</code>). It reflects the <strong>primary CV score</strong> used during training-time model selection (macro-F1). Runs are sorted by CV macro-F1; the best is bolded.</p>
 <!-- AUTO-GENERATED: docs/executive_summary/tools/generate_model_metrics_md.py -->
-<!-- Generated: 2026-04-09 22:00:09 MDT -->
+<!-- Generated: 2026-04-09 22:44:25 MDT -->
 <section id="best-model-current-leader" class="level3">
 <h3 class="anchored" data-anchor-id="best-model-current-leader">Best model (current leader)</h3>
 <ul>
-<li>Run: <code>20260409_214833</code> (<code>native</code> / <code>activity_general</code>, 11 classes, sample_fraction=0.4)</li>
-<li>CV macro-F1: <code>0.7772</code> (folds=2)</li>
-<li>Train macro-F1: <code>0.8088</code>; train accuracy: <code>0.8304</code></li>
-<li>Boosting: <code>900</code> rounds (early_stopping_rounds=40)</li>
-<li>Key params: learning_rate=0.030, max_depth=6, min_child_weight=3, subsample=0.800, colsample_bytree=0.800, alpha=0.100, lambda=0.800</li>
+<li>Model: <strong>XGBoost native</strong></li>
+<li>Target: <strong>Generalized activities (11 classes)</strong></li>
+<li>CV macro-F1: <strong>0.7772</strong> (folds=2)</li>
+<li>Data fraction: 0.4</li>
+<li>Train macro-F1: 0.8088; train accuracy: 0.8304</li>
+<li>Boosting: 900 rounds (early_stopping_rounds=40)</li>
+<li>Key settings: learning_rate=0.030, max_depth=6, rounds=900</li>
 </ul>
-<blockquote class="blockquote">
-<p>Notes to include (edit in the QMD): why this run is the pick, what split was used, and what the next validation step is.</p>
-</blockquote>
 <table class="caption-top table">
 <colgroup>
-<col style="width: 7%">
-<col style="width: 7%">
-<col style="width: 7%">
-<col style="width: 10%">
-<col style="width: 10%">
-<col style="width: 10%">
-<col style="width: 10%">
-<col style="width: 10%">
-<col style="width: 10%">
-<col style="width: 10%">
-<col style="width: 7%">
+<col style="width: 16%">
+<col style="width: 16%">
+<col style="width: 22%">
+<col style="width: 22%">
+<col style="width: 22%">
 </colgroup>
 <thead>
 <tr class="header">
-<th>timestamp</th>
-<th>api</th>
-<th>target</th>
-<th style="text-align: right;">sample_fraction</th>
-<th style="text-align: right;">threads</th>
-<th style="text-align: right;">cv_folds</th>
-<th style="text-align: right;">cv_macro_f1</th>
-<th style="text-align: right;">train_macro_f1</th>
-<th style="text-align: right;">train_accuracy</th>
-<th style="text-align: right;">n_classes</th>
-<th>meta_file</th>
+<th>Model</th>
+<th>Target</th>
+<th style="text-align: right;">Macro-F1 (CV)</th>
+<th style="text-align: right;">Macro-F1 (train)</th>
+<th style="text-align: right;">Accuracy (train)</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td><code>20260409_215520</code></td>
-<td><code>sklearn</code></td>
-<td><code>activity_general</code></td>
-<td style="text-align: right;">0.001</td>
-<td style="text-align: right;">12</td>
-<td style="text-align: right;">N/A</td>
-<td style="text-align: right;">0.4814</td>
-<td style="text-align: right;">0.9295</td>
-<td style="text-align: right;">0.9882</td>
-<td style="text-align: right;">10</td>
-<td><code>meta_sklearn_activity_general_f1_macro_0.4814_20260409_215520.json</code></td>
-</tr>
-<tr class="even">
-<td><code>20260409_215447</code></td>
-<td><code>native</code></td>
-<td><code>activity_general</code></td>
-<td style="text-align: right;">0.001</td>
-<td style="text-align: right;">12</td>
-<td style="text-align: right;">2</td>
-<td style="text-align: right;">0.4445</td>
-<td style="text-align: right;">0.5499</td>
-<td style="text-align: right;">0.7474</td>
-<td style="text-align: right;">10</td>
-<td><code>meta_native_activity_general_f1_macro_0.4445_20260409_215447.json</code></td>
-</tr>
-<tr class="odd">
-<td><code>20260409_214833</code></td>
-<td><code>native</code></td>
-<td><code>activity_general</code></td>
-<td style="text-align: right;">0.4</td>
-<td style="text-align: right;">15</td>
-<td style="text-align: right;">2</td>
-<td style="text-align: right;">0.7772</td>
+<td>XGBoost native</td>
+<td>Generalized activities (11 classes)</td>
+<td style="text-align: right;"><strong>0.7772</strong></td>
 <td style="text-align: right;">0.8088</td>
 <td style="text-align: right;">0.8304</td>
-<td style="text-align: right;">11</td>
-<td><code>meta_native_activity_general_f1_macro_0.7772_20260409_214833.json</code></td>
 </tr>
 <tr class="even">
-<td><code>20260408_221512</code></td>
-<td><code>native</code></td>
-<td><code>activity_general</code></td>
-<td style="text-align: right;">0.005</td>
-<td style="text-align: right;">12</td>
-<td style="text-align: right;">N/A</td>
-<td style="text-align: right;">0.5829</td>
-<td style="text-align: right;">0.7615</td>
-<td style="text-align: right;">0.8591</td>
-<td style="text-align: right;">11</td>
-<td><code>meta_native_activity_general_f1_macro_0.5829_20260408_221512.json</code></td>
-</tr>
-<tr class="odd">
-<td><code>20260408_221358</code></td>
-<td><code>sklearn</code></td>
-<td><code>activity_general</code></td>
-<td style="text-align: right;">0.01</td>
-<td style="text-align: right;">12</td>
-<td style="text-align: right;">N/A</td>
+<td>XGBoost sklearn</td>
+<td>Generalized activities (11 classes)</td>
 <td style="text-align: right;">0.6221</td>
 <td style="text-align: right;">0.7607</td>
 <td style="text-align: right;">0.8638</td>
-<td style="text-align: right;">11</td>
-<td><code>meta_sklearn_activity_general_f1_macro_0.6221_20260408_221358.json</code></td>
-</tr>
-<tr class="even">
-<td><code>20260408_221101</code></td>
-<td><code>sklearn</code></td>
-<td><code>activity_general</code></td>
-<td style="text-align: right;">0.01</td>
-<td style="text-align: right;">12</td>
-<td style="text-align: right;">N/A</td>
-<td style="text-align: right;">N/A</td>
-<td style="text-align: right;">0.7607</td>
-<td style="text-align: right;">0.8638</td>
-<td style="text-align: right;">11</td>
-<td><code>meta_sklearn_activity_general_f1_macro_nan_20260408_221101.json</code></td>
 </tr>
 <tr class="odd">
-<td><code>20260408_215912</code></td>
-<td><code>native</code></td>
-<td><code>activity_general</code></td>
-<td style="text-align: right;">0.005</td>
-<td style="text-align: right;">12</td>
-<td style="text-align: right;">N/A</td>
-<td style="text-align: right;">0.5938</td>
-<td style="text-align: right;">0.7583</td>
-<td style="text-align: right;">0.8563</td>
-<td style="text-align: right;">11</td>
-<td><code>meta_native_activity_general_f1_macro_0.5938_20260408_215912.json</code></td>
-</tr>
-<tr class="even">
-<td><code>20260408_215753</code></td>
-<td><code>sklearn</code></td>
-<td><code>activity_general</code></td>
-<td style="text-align: right;">0.01</td>
-<td style="text-align: right;">12</td>
-<td style="text-align: right;">N/A</td>
+<td>XGBoost sklearn</td>
+<td>Generalized activities (11 classes)</td>
 <td style="text-align: right;">0.6157</td>
 <td style="text-align: right;">0.7607</td>
 <td style="text-align: right;">0.8638</td>
-<td style="text-align: right;">11</td>
-<td><code>meta_sklearn_activity_general_f1_macro_0.6157_20260408_215753.json</code></td>
+</tr>
+<tr class="even">
+<td>XGBoost native</td>
+<td>Generalized activities (11 classes)</td>
+<td style="text-align: right;">0.5938</td>
+<td style="text-align: right;">0.7583</td>
+<td style="text-align: right;">0.8563</td>
+</tr>
+<tr class="odd">
+<td>XGBoost native</td>
+<td>Generalized activities (11 classes)</td>
+<td style="text-align: right;">0.5829</td>
+<td style="text-align: right;">0.7615</td>
+<td style="text-align: right;">0.8591</td>
+</tr>
+<tr class="even">
+<td>XGBoost sklearn</td>
+<td>Generalized activities (10 classes)</td>
+<td style="text-align: right;">0.4814</td>
+<td style="text-align: right;">0.9295</td>
+<td style="text-align: right;">0.9882</td>
+</tr>
+<tr class="odd">
+<td>XGBoost native</td>
+<td>Generalized activities (10 classes)</td>
+<td style="text-align: right;">0.4445</td>
+<td style="text-align: right;">0.5499</td>
+<td style="text-align: right;">0.7474</td>
+</tr>
+<tr class="even">
+<td>XGBoost sklearn</td>
+<td>Generalized activities (11 classes)</td>
+<td style="text-align: right;">N/A</td>
+<td style="text-align: right;">0.7607</td>
+<td style="text-align: right;">0.8638</td>
 </tr>
 </tbody>
 </table>
-</section>
-<section id="best-model-notes" class="level3">
-<h3 class="anchored" data-anchor-id="best-model-notes">Best Model Notes</h3>
-<p>The “best model” block above is selected strictly by the primary CV metric (macro-F1). Two common ways this can mislead are (1) <strong>high-variance CV</strong> when folds are low, and (2) <strong>split mismatch</strong> (row-level splits vs grouped-by-home splits). For final reporting, keep the split strategy fixed, rerun with enough folds to stabilize the estimate, and include a confusion matrix alongside macro-F1.</p>
 <!-- REMOVE_FOR_FINAL:BEGIN validation-caveat -->
 <div class="remove-for-final callout callout-style-default callout-warning callout-titled" title="VALIDATION CAVEAT (remove for final)">
 <div class="callout-header d-flex align-content-center">
@@ -553,21 +482,8 @@ VALIDATION CAVEAT (remove for final)
 <section id="recommendation" class="level2">
 <h2 class="anchored" data-anchor-id="recommendation">Recommendation</h2>
 <p>Default to training on <strong>generalized labels</strong> (<code>activity_general</code>). If sub-activities are still required, add a second-stage classifier trained only inside each generalized bucket; this keeps the primary model stable and reduces failure modes on rare fine-grained labels.</p>
-</section>
-<section id="render-publish" class="level2">
-<h2 class="anchored" data-anchor-id="render-publish">Render &amp; Publish</h2>
-<section id="local-render" class="level3">
-<h3 class="anchored" data-anchor-id="local-render">Local render</h3>
-<p>From repo root:</p>
-<div class="sourceCode" id="cb8"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="ex">quarto</span> render docs/executive_summary</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<p>This produces <code>docs/executive_summary/_site/index.html</code>.</p>
-</section>
-<section id="github-pages" class="level3">
-<h3 class="anchored" data-anchor-id="github-pages">GitHub Pages</h3>
-<p>This repo is configured to render and deploy via GitHub Actions on push (<code>.github/workflows/quarto-pages.yml</code>).</p>
 
 
-</section>
 </section>
 
 </main> <!-- /main -->

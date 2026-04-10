@@ -19,19 +19,19 @@ This is a mock-up executive summary. It is meant to be readable and professional
 
 <div class="es-metrics">
   <div class="es-card">
-    <div class="kicker">Targets considered</div>
-    <div class="value">41 specific / 11 generalized</div>
-    <div class="note">Generalized labels reduce sparsity and imbalance.</div>
+    <div class="kicker">Recommended target</div>
+    <div class="value">Generalized (11 classes)</div>
+    <div class="note">More stable learning under class imbalance.</div>
   </div>
   <div class="es-card">
-    <div class="kicker">Best quick baseline (macro-F1)</div>
-    <div class="value">0.720</div>
-    <div class="note">For <code>activity_general</code> (row-level CV).</div>
+    <div class="kicker">Current leader (CV macro-F1)</div>
+    <div class="value">0.777</div>
+    <div class="note">Best saved run for the generalized target.</div>
   </div>
   <div class="es-card">
-    <div class="kicker">Dataset</div>
-    <div class="value">30 homes</div>
-    <div class="note">Each row is a sliding window of 30 sensor events.</div>
+    <div class="kicker">Data representation</div>
+    <div class="value">30-event windows</div>
+    <div class="note">30 homes; 36 numeric features per window.</div>
   </div>
 </div>
 
@@ -130,13 +130,9 @@ The table below compares a lightweight baseline evaluation for the two target ch
 
 ## Metrics (Saved Training Runs)
 
-The table below is auto-generated from the saved run metadata in `models/meta_*.json` (refresh via `python docs/executive_summary/tools/generate_model_metrics_md.py`). It reflects the **primary CV score** used during training-time model selection (currently macro-F1). CV folds and split strategy can vary across runs; where available, the table includes the number of folds.
+The table below is auto-generated from the saved run metadata in `models/meta_*.json` (refresh via `python docs/executive_summary/tools/generate_model_metrics_md.py`). It reflects the **primary CV score** used during training-time model selection (macro-F1). Runs are sorted by CV macro-F1; the best is bolded.
 
 {{< include _includes/model_metrics.md >}}
-
-### Best Model Notes
-
-The “best model” block above is selected strictly by the primary CV metric (macro-F1). Two common ways this can mislead are (1) **high-variance CV** when folds are low, and (2) **split mismatch** (row-level splits vs grouped-by-home splits). For final reporting, keep the split strategy fixed, rerun with enough folds to stabilize the estimate, and include a confusion matrix alongside macro-F1.
 
 <!-- REMOVE_FOR_FINAL:BEGIN validation-caveat -->
 ::: {.callout-warning title="VALIDATION CAVEAT (remove for final)" .remove-for-final}
@@ -159,19 +155,3 @@ Compensations we can make (and should, if this is a final report):
 ## Recommendation
 
 Default to training on **generalized labels** (`activity_general`). If sub-activities are still required, add a second-stage classifier trained only inside each generalized bucket; this keeps the primary model stable and reduces failure modes on rare fine-grained labels.
-
-## Render & Publish
-
-### Local render
-
-From repo root:
-
-```bash
-quarto render docs/executive_summary
-```
-
-This produces `docs/executive_summary/_site/index.html`.
-
-### GitHub Pages
-
-This repo is configured to render and deploy via GitHub Actions on push (`.github/workflows/quarto-pages.yml`).

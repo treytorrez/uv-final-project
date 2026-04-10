@@ -34,6 +34,35 @@ def _fmt_float(value: Any, ndigits: int = 4) -> str:
     return f"{f:.{ndigits}f}"
 
 
+def _fmt_int(value: Any) -> str:
+    if value is None:
+        return "N/A"
+    try:
+        return str(int(value))
+    except Exception:
+        return "N/A"
+
+
+def _pretty_target(target: Any, n_classes: Any) -> str:
+    """Human-friendly label for target column names."""
+    label = str(target) if target is not None else "Unknown target"
+    if label == "activity_general":
+        label = "Generalized activities"
+    elif label == "activity":
+        label = "Specific activities"
+    n = _fmt_int(n_classes)
+    return f"{label} ({n} classes)" if n != "N/A" else label
+
+
+def _pretty_api(api: Any) -> str:
+    label = str(api) if api is not None else "Unknown"
+    if label == "native":
+        return "XGBoost native"
+    if label == "sklearn":
+        return "XGBoost sklearn"
+    return label
+
+
 def _fmt_fraction(value: Any) -> str:
     if value is None:
         return "N/A"
@@ -101,7 +130,18 @@ def main() -> int:
             }
         )
 
-    rows.sort(key=lambda r: r["timestamp_dt"], reverse=True)
+    # Prefer sorting by CV score for presentation; break ties by recency.
+    def _sort_key(r: dict[str, Any]) -> tuple[int, float, dt.datetime]:
+        s = None
+        try:
+            s = float(r.get("cv_primary"))
+        except Exception:
+            s = None
+        if s is None or math.isnan(s) or math.isinf(s):
+            return (1, 0.0, r["timestamp_dt"])  # missing scores at bottom
+        return (0, -s, r["timestamp_dt"])
+
+    rows.sort(key=_sort_key)
 
     # Identify a "best" run by CV score (ignoring missing/invalid values).
     def _cv_score(row: dict[str, Any]) -> float | None:
@@ -158,63 +198,55 @@ def main() -> int:
 
         lines.append("### Best model (current leader)")
         lines.append("")
-        lines.append(
-            f"- Run: `{r.get('timestamp')}` (`{r.get('api')}` / `{r.get('target')}`, {r.get('n_classes')} classes, sample_fraction={_fmt_fraction(r.get('sample_fraction'))})"
-        )
+        lines.append(f"- Model: **{_pretty_api(r.get('api'))}**")
+        lines.append(f"- Target: **{_pretty_target(r.get('target'), r.get('n_classes'))}**")
         cv_context = []
         if cv_folds is not None:
             cv_context.append(f"folds={cv_folds}")
         if cv_scheme:
             cv_context.append(str(cv_scheme))
         cv_suffix = f" ({', '.join(cv_context)})" if cv_context else ""
-        lines.append(f"- CV macro-F1: `{_fmt_float(score)}`{cv_suffix}")
+        lines.append(f"- CV macro-F1: **{_fmt_float(score)}**{cv_suffix}")
+        if r.get("sample_fraction") is not None:
+            lines.append(f"- Data fraction: {_fmt_fraction(r.get('sample_fraction'))}")
         lines.append(
-            f"- Train macro-F1: `{_fmt_float(r.get('train_f1_macro'))}`; train accuracy: `{_fmt_float(r.get('train_accuracy'))}`"
+            f"- Train macro-F1: {_fmt_float(r.get('train_f1_macro'))}; "
+            f"train accuracy: {_fmt_float(r.get('train_accuracy'))}"
         )
         if rounds is not None:
             if early_stop is not None:
-                lines.append(f"- Boosting: `{rounds}` rounds (early_stopping_rounds={early_stop})")
+                lines.append(f"- Boosting: {rounds} rounds (early_stopping_rounds={early_stop})")
             else:
-                lines.append(f"- Boosting: `{rounds}` rounds")
-        lines.append(
-            "- Key params: "
-            + ", ".join(
-                [
-                    f"learning_rate={_fmt_float(lr, ndigits=3)}" if lr is not None else "learning_rate=N/A",
-                    f"max_depth={max_depth}" if max_depth is not None else "max_depth=N/A",
-                    f"min_child_weight={min_child_weight}" if min_child_weight is not None else "min_child_weight=N/A",
-                    f"subsample={_fmt_float(subsample, ndigits=3)}" if subsample is not None else "subsample=N/A",
-                    f"colsample_bytree={_fmt_float(colsample, ndigits=3)}" if colsample is not None else "colsample_bytree=N/A",
-                    f"alpha={_fmt_float(reg_alpha, ndigits=3)}" if reg_alpha is not None else "alpha=N/A",
-                    f"lambda={_fmt_float(reg_lambda, ndigits=3)}" if reg_lambda is not None else "lambda=N/A",
-                ]
-            )
-        )
-        lines.append("")
-        lines.append(
-            "> Notes to include (edit in the QMD): why this run is the pick, what split was used, and what the next validation step is."
-        )
+                lines.append(f"- Boosting: {rounds} rounds")
+        # Keep this compact: enough to reproduce, not a full hyperparam dump.
+        key_bits = []
+        if lr is not None:
+            key_bits.append(f"learning_rate={_fmt_float(lr, ndigits=3)}")
+        if max_depth is not None:
+            key_bits.append(f"max_depth={max_depth}")
+        if rounds is not None:
+            key_bits.append(f"rounds={rounds}")
+        if key_bits:
+            lines.append(f"- Key settings: {', '.join(key_bits)}")
         lines.append("")
 
-    lines.append("| timestamp | api | target | sample_fraction | threads | cv_folds | cv_macro_f1 | train_macro_f1 | train_accuracy | n_classes | meta_file |")
-    lines.append("|---|---|---|---:|---:|---:|---:|---:|---:|---:|---|")
+    lines.append("| Model | Target | Macro-F1 (CV) | Macro-F1 (train) | Accuracy (train) |")
+    lines.append("|---|---|---:|---:|---:|")
 
+    best_meta = best[1].get("meta_file") if best is not None else None
     for r in rows:
+        cv_val = _fmt_float(r.get("cv_primary"))
+        if best_meta and r.get("meta_file") == best_meta and cv_val != "N/A":
+            cv_val = f"**{cv_val}**"
         lines.append(
             "| "
             + " | ".join(
                 [
-                    f"`{r.get('timestamp')}`" if r.get("timestamp") else "N/A",
-                    f"`{r.get('api')}`" if r.get("api") else "N/A",
-                    f"`{r.get('target')}`" if r.get("target") else "N/A",
-                    _fmt_fraction(r.get("sample_fraction")),
-                    str(r.get("threads") if r.get("threads") is not None else "N/A"),
-                    str(r.get("cv_folds") if r.get("cv_folds") is not None else "N/A"),
-                    _fmt_float(r.get("cv_primary")),
+                    _pretty_api(r.get("api")),
+                    _pretty_target(r.get("target"), r.get("n_classes")),
+                    cv_val,
                     _fmt_float(r.get("train_f1_macro")),
                     _fmt_float(r.get("train_accuracy")),
-                    str(r.get("n_classes") if r.get("n_classes") is not None else "N/A"),
-                    f"`{r.get('meta_file')}`",
                 ]
             )
             + " |"
