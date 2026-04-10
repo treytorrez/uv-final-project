@@ -15,6 +15,14 @@ from pathlib import Path
 from typing import Any
 
 
+EXPECTED_CLASS_COUNTS: dict[str, int] = {
+    "activity_general": 11,
+    "activity": 41,
+}
+
+MAX_TABLE_ROWS: int = 5
+
+
 def _parse_timestamp(ts: str) -> dt.datetime | None:
     try:
         return dt.datetime.strptime(ts, "%Y%m%d_%H%M%S")
@@ -100,6 +108,7 @@ def main() -> int:
         train_metrics = meta.get("train_metrics") or {}
         classes = meta.get("classes") or []
         details = meta.get("details") or {}
+        target = meta.get("target_column")
 
         # Best-effort capture of CV context. Older runs may not record these.
         cv_scheme = details.get("cv_scheme")
@@ -115,7 +124,7 @@ def main() -> int:
                 "timestamp": ts_str,
                 "timestamp_dt": ts or dt.datetime.min,
                 "api": meta.get("api"),
-                "target": meta.get("target_column"),
+                "target": target,
                 "sample_fraction": meta.get("sample_fraction"),
                 "threads": meta.get("train_threads"),
                 "cv_scheme": cv_scheme,
@@ -124,26 +133,13 @@ def main() -> int:
                 "train_f1_macro": train_metrics.get("train_f1_macro"),
                 "train_accuracy": train_metrics.get("train_accuracy"),
                 "n_classes": len(classes) if isinstance(classes, list) else None,
+                "expected_n_classes": EXPECTED_CLASS_COUNTS.get(str(target)) if target is not None else None,
                 "best_params": details.get("best_params"),
                 "details": details,
                 "meta_file": path.name,
             }
         )
 
-    # Prefer sorting by CV score for presentation; break ties by recency.
-    def _sort_key(r: dict[str, Any]) -> tuple[int, float, dt.datetime]:
-        s = None
-        try:
-            s = float(r.get("cv_primary"))
-        except Exception:
-            s = None
-        if s is None or math.isnan(s) or math.isinf(s):
-            return (1, 0.0, r["timestamp_dt"])  # missing scores at bottom
-        return (0, -s, r["timestamp_dt"])
-
-    rows.sort(key=_sort_key)
-
-    # Identify a "best" run by CV score (ignoring missing/invalid values).
     def _cv_score(row: dict[str, Any]) -> float | None:
         try:
             f = float(row.get("cv_primary"))
@@ -153,11 +149,29 @@ def main() -> int:
             return None
         return f
 
-    best = None
+    # Keep only runs that are comparable for reporting:
+    # - must have a valid CV metric
+    # - must include the full class set (when expected count is known)
+    report_rows = []
     for r in rows:
-        s = _cv_score(r)
-        if s is None:
+        score = _cv_score(r)
+        if score is None:
             continue
+        expected_n = r.get("expected_n_classes")
+        if expected_n is not None and r.get("n_classes") != expected_n:
+            continue
+        r["cv_primary_score"] = score
+        report_rows.append(r)
+
+    # Sort by CV score (desc), then recency.
+    report_rows.sort(
+        key=lambda r: (float(r["cv_primary_score"]), r["timestamp_dt"]),
+        reverse=True,
+    )
+
+    best = None
+    for r in report_rows:
+        s = float(r["cv_primary_score"])
         if best is None or s > best[0]:
             best = (s, r)
 
@@ -171,8 +185,15 @@ def main() -> int:
     lines.append(f"<!-- Generated: {generated_at} -->")
     lines.append("")
 
-    if not rows:
+    if not meta_paths:
         lines.append("_No saved model metadata found in `models/meta_*.json`._")
+        out_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+        return 0
+
+    if not report_rows:
+        lines.append(
+            "_No comparable runs found (needs valid CV metric and a full class set for the target)._"
+        )
         out_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
         return 0
 
@@ -200,15 +221,9 @@ def main() -> int:
         lines.append("")
         lines.append(f"- Model: **{_pretty_api(r.get('api'))}**")
         lines.append(f"- Target: **{_pretty_target(r.get('target'), r.get('n_classes'))}**")
-        cv_context = []
-        if cv_folds is not None:
-            cv_context.append(f"folds={cv_folds}")
-        if cv_scheme:
-            cv_context.append(str(cv_scheme))
-        cv_suffix = f" ({', '.join(cv_context)})" if cv_context else ""
-        lines.append(f"- CV macro-F1: **{_fmt_float(score)}**{cv_suffix}")
+        lines.append(f"- CV macro-F1: **{_fmt_float(score)}**")
         if r.get("sample_fraction") is not None:
-            lines.append(f"- Data fraction: {_fmt_fraction(r.get('sample_fraction'))}")
+            lines.append(f"- Sample fraction: **{_fmt_fraction(r.get('sample_fraction'))}**")
         lines.append(
             f"- Train macro-F1: {_fmt_float(r.get('train_f1_macro'))}; "
             f"train accuracy: {_fmt_float(r.get('train_accuracy'))}"
@@ -230,20 +245,29 @@ def main() -> int:
             lines.append(f"- Key settings: {', '.join(key_bits)}")
         lines.append("")
 
-    lines.append("| Model | Target | Macro-F1 (CV) | Macro-F1 (train) | Accuracy (train) |")
-    lines.append("|---|---|---:|---:|---:|")
+    lines.append(f"_Showing top {min(MAX_TABLE_ROWS, len(report_rows))} runs (by CV macro-F1)._")
+    lines.append("")
+
+    lines.append("| Model | Target | Sample fraction | Macro-F1 (CV) | Macro-F1 (train) | Accuracy (train) |")
+    lines.append("|---|---|---:|---:|---:|---:|")
 
     best_meta = best[1].get("meta_file") if best is not None else None
-    for r in rows:
+    for r in report_rows[:MAX_TABLE_ROWS]:
         cv_val = _fmt_float(r.get("cv_primary"))
         if best_meta and r.get("meta_file") == best_meta and cv_val != "N/A":
             cv_val = f"**{cv_val}**"
+        model_label = _pretty_api(r.get("api"))
+        target_label = _pretty_target(r.get("target"), r.get("n_classes"))
+        if best_meta and r.get("meta_file") == best_meta:
+            model_label = f"**{model_label}**"
+            target_label = f"**{target_label}**"
         lines.append(
             "| "
             + " | ".join(
                 [
-                    _pretty_api(r.get("api")),
-                    _pretty_target(r.get("target"), r.get("n_classes")),
+                    model_label,
+                    target_label,
+                    _fmt_fraction(r.get("sample_fraction")),
                     cv_val,
                     _fmt_float(r.get("train_f1_macro")),
                     _fmt_float(r.get("train_accuracy")),

@@ -1,6 +1,6 @@
 ---
 title: "Human Activity Recognition (CASAS) Executive Summary"
-subtitle: "Ambient sensor windows → activity predictions (XGBoost baseline)"
+subtitle: "Ambient sensor windows → activity predictions (XGBoost)"
 date: last-modified
 date-format: "MMMM D, YYYY"
 format:
@@ -11,27 +11,21 @@ format:
     page-layout: full
 ---
 
-<!-- REMOVE_FOR_FINAL:BEGIN mockup -->
-::: {.callout-important title="DRAFT NOTE (remove for final)" .remove-for-final}
-This is a mock-up executive summary. It is meant to be readable and professional first, and fully sourced/complete second. We can tighten claims and swap in final metrics once you decide which target and evaluation protocol you want to report.
-:::
-<!-- REMOVE_FOR_FINAL:END mockup -->
-
 <div class="es-metrics">
   <div class="es-card">
-    <div class="kicker">Recommended target</div>
-    <div class="value">Generalized (11 classes)</div>
-    <div class="note">More stable learning under class imbalance.</div>
+    <div class="kicker">Dataset (post-cleaning)</div>
+    <div class="value">9.19M windows</div>
+    <div class="note">Sample fraction 1.0 = 9,186,574 labeled windows (30 homes).</div>
   </div>
   <div class="es-card">
-    <div class="kicker">Current leader (CV macro-F1)</div>
+    <div class="kicker">Best model (macro-F1 CV)</div>
     <div class="value">0.777</div>
-    <div class="note">Best saved run for the generalized target.</div>
+    <div class="note">Generalized target; sample fraction 0.40.</div>
   </div>
   <div class="es-card">
-    <div class="kicker">Data representation</div>
-    <div class="value">30-event windows</div>
-    <div class="note">30 homes; 36 numeric features per window.</div>
+    <div class="kicker">Targets</div>
+    <div class="value">11 vs 41 classes</div>
+    <div class="note">Generalized labels outperform specific labels on macro-F1.</div>
   </div>
 </div>
 
@@ -39,7 +33,7 @@ This is a mock-up executive summary. It is meant to be readable and professional
 
 This project builds a multiclass classifier to recognize daily activities in smart homes from ambient sensor streams (motion, doors, light, etc.). Each training instance is a **feature vector computed over a sliding window of 30 sensor events**, and the model predicts either a fine-grained activity label (41-class) or a generalized activity category (11-class).
 
-The clearest takeaway from early results is that **generalized labels are substantially more learnable and more stable**, improving macro-F1, weighted-F1, and accuracy in a quick baseline comparison. If the goal is dependable activity recognition rather than strict sub-activity identification, the generalized target is the right default.
+The clearest takeaway from evaluation results is that **generalized labels are substantially more learnable and more stable**, improving macro-F1, weighted-F1, and accuracy in cross-validation. The strongest saved run reaches **macro-F1 (CV) = 0.777** on the generalized target.
 
 ## Problem & Goal
 
@@ -52,30 +46,29 @@ The clearest takeaway from early results is that **generalized labels are substa
 - Source: CASAS smart home ambient sensor dataset (homes `csh101`–`csh130`).
 - Instances: sliding window of 30 sensor events, summarized into numeric features.
 - Features: 36 numeric features per row (plus label columns).
+- Total labeled windows used for modeling after label cleanup and filtering: **9,186,574**.
 - Labels:
   - `activity`: specific activities (41 classes in current pipeline).
   - `activity_general`: 11 generalized categories (Hygiene, Leisure, Meal_Prep, etc.).
 
-::: {.callout-note}
 Generalization is performed by mapping multiple specific labels into a smaller set (e.g., `Cook_Breakfast`, `Cook_Lunch`, `Cook_Dinner` → `Meal_Prep`).
-:::
 
 ## Modeling Approach
 
 ### Baseline Model
 
-We use **XGBoost (gradient boosted decision trees)** because it:
+This work uses **XGBoost (gradient boosted decision trees)** because it:
 - handles heterogeneous numeric features well without normalization,
 - scales to large tabular datasets efficiently (`tree_method="hist"`),
 - supports multiclass probabilities (needed for log loss and calibration).
 
 ### Primary Metric
 
-For reporting, we focus on **macro-F1** because the class distribution is imbalanced and we want each class to matter. We treat accuracy and weighted-F1 as secondary diagnostics.
+The primary metric is **macro-F1** because the class distribution is imbalanced and each class should contribute equally. Accuracy and weighted-F1 are treated as secondary diagnostics.
 
 ## Implementation (Selected Code)
 
-These are short excerpts that reflect the current pipeline used in `notebooks/exploratory.ipynb` and `scripts/train_final.py`.
+These are short excerpts from the training pipeline (`scripts/train_final.py`).
 
 ### Label Cleanup + Generalization (Polars)
 
@@ -108,16 +101,7 @@ python scripts/train_final.py --api sklearn --target-column activity_general \
   --sample-fraction 0.05 --n-folds 5 --n-trials 12 --reserve-threads 4 --verbosity 2
 ```
 
-### Saved Artifacts
-
-```text
-models/xgb_native_<target>_f1_macro_<score>_<timestamp>.json
-models/meta_native_<target>_f1_macro_<score>_<timestamp>.json
-models/xgb_sklearn_<target>_f1_macro_<score>_<timestamp>.pkl
-models/meta_sklearn_<target>_f1_macro_<score>_<timestamp>.json
-```
-
-## Key Results (Quick Baseline)
+## Key Results
 
 The table below compares a lightweight baseline evaluation for the two target choices:
 
@@ -130,15 +114,9 @@ The table below compares a lightweight baseline evaluation for the two target ch
 
 ## Metrics (Saved Training Runs)
 
-The table below is auto-generated from the saved run metadata in `models/meta_*.json` (refresh via `python docs/executive_summary/tools/generate_model_metrics_md.py`). It reflects the **primary CV score** used during training-time model selection (macro-F1). Runs are sorted by CV macro-F1; the best is bolded.
+The table below is auto-generated from the saved run metadata in `models/meta_*.json` (refresh via `python docs/executive_summary/tools/generate_model_metrics_md.py`). It reflects the **primary CV score** used during training-time model selection (macro-F1). Sample fraction is a per-home sampling rate used to manage compute; **sample fraction 1.0 corresponds to 9,186,574 windows** after label cleanup and filtering.
 
 {{< include _includes/model_metrics.md >}}
-
-<!-- REMOVE_FOR_FINAL:BEGIN validation-caveat -->
-::: {.callout-warning title="VALIDATION CAVEAT (remove for final)" .remove-for-final}
-This baseline uses row-level cross validation, which may overestimate true generalization because the data is created from overlapping sliding windows. A more defensible “unseen home” score would use a grouped split by `home_id`.
-:::
-<!-- REMOVE_FOR_FINAL:END validation-caveat -->
 
 ## Risks, Limitations, and What Would Make It Better
 
@@ -147,11 +125,14 @@ This baseline uses row-level cross validation, which may overestimate true gener
 - **Extreme class imbalance:** some specific labels are extremely rare; evaluation variance can be misleading.
 - **Interpretability:** boosted trees are interpretable at the feature level, but not causal; confusion matrices matter.
 
-Compensations we can make (and should, if this is a final report):
+Opportunities for improvement:
 - Switch evaluation to `GroupKFold` by `home_id` (or leave-one-home-out).
 - Report both macro-F1 and log loss, plus a confusion matrix for top activities.
 - Consider a two-stage model: generalized prediction first, then specific within a bucket.
 
-## Recommendation
+## Future Improvements
 
-Default to training on **generalized labels** (`activity_general`). If sub-activities are still required, add a second-stage classifier trained only inside each generalized bucket; this keeps the primary model stable and reduces failure modes on rare fine-grained labels.
+Future work focuses on strengthening generalization and interpretability:
+- Evaluate with an “unseen home” protocol (grouped by `home_id`) to avoid optimistic scores from correlated sliding windows.
+- Add confusion matrices and per-class support to make failure modes clear to non-technical stakeholders.
+- Consider a two-stage approach: predict generalized categories first, then predict fine-grained activities within each category.

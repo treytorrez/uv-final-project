@@ -157,15 +157,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#label-cleanup-generalization-polars" id="toc-label-cleanup-generalization-polars" class="nav-link" data-scroll-target="#label-cleanup-generalization-polars">Label Cleanup + Generalization (Polars)</a></li>
   <li><a href="#memory-safe-sampling-per-home" id="toc-memory-safe-sampling-per-home" class="nav-link" data-scroll-target="#memory-safe-sampling-per-home">Memory-Safe Sampling (Per Home)</a></li>
   <li><a href="#training-commands-xgboost" id="toc-training-commands-xgboost" class="nav-link" data-scroll-target="#training-commands-xgboost">Training Commands (XGBoost)</a></li>
-  <li><a href="#saved-artifacts" id="toc-saved-artifacts" class="nav-link" data-scroll-target="#saved-artifacts">Saved Artifacts</a></li>
   </ul></li>
-  <li><a href="#key-results-quick-baseline" id="toc-key-results-quick-baseline" class="nav-link" data-scroll-target="#key-results-quick-baseline">Key Results (Quick Baseline)</a></li>
+  <li><a href="#key-results" id="toc-key-results" class="nav-link" data-scroll-target="#key-results">Key Results</a></li>
   <li><a href="#metrics-saved-training-runs" id="toc-metrics-saved-training-runs" class="nav-link" data-scroll-target="#metrics-saved-training-runs">Metrics (Saved Training Runs)</a>
   <ul class="collapse">
   <li><a href="#best-model-current-leader" id="toc-best-model-current-leader" class="nav-link" data-scroll-target="#best-model-current-leader">Best model (current leader)</a></li>
   </ul></li>
   <li><a href="#risks-limitations-and-what-would-make-it-better" id="toc-risks-limitations-and-what-would-make-it-better" class="nav-link" data-scroll-target="#risks-limitations-and-what-would-make-it-better">Risks, Limitations, and What Would Make It Better</a></li>
-  <li><a href="#recommendation" id="toc-recommendation" class="nav-link" data-scroll-target="#recommendation">Recommendation</a></li>
+  <li><a href="#future-improvements" id="toc-future-improvements" class="nav-link" data-scroll-target="#future-improvements">Future Improvements</a></li>
   </ul>
 </nav>
 </nav>
@@ -179,7 +178,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
 <h1 class="title">Human Activity Recognition (CASAS) Executive Summary</h1>
-<p class="subtitle lead">Ambient sensor windows → activity predictions (XGBoost baseline)</p>
+<p class="subtitle lead">Ambient sensor windows → activity predictions (XGBoost)</p>
 </div>
 
 
@@ -202,42 +201,27 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </header>
 
 
-<!-- REMOVE_FOR_FINAL:BEGIN mockup -->
-<div class="remove-for-final callout callout-style-default callout-important callout-titled" title="DRAFT NOTE (remove for final)">
-<div class="callout-header d-flex align-content-center">
-<div class="callout-icon-container">
-<i class="callout-icon"></i>
-</div>
-<div class="callout-title-container flex-fill">
-DRAFT NOTE (remove for final)
-</div>
-</div>
-<div class="callout-body-container callout-body">
-<p>This is a mock-up executive summary. It is meant to be readable and professional first, and fully sourced/complete second. We can tighten claims and swap in final metrics once you decide which target and evaluation protocol you want to report.</p>
-</div>
-</div>
-<!-- REMOVE_FOR_FINAL:END mockup -->
 <div class="es-metrics">
 <div class="es-card">
-<pre><code>&lt;div class="kicker"&gt;Recommended target&lt;/div&gt;
-&lt;div class="value"&gt;Generalized (11 classes)&lt;/div&gt;
-&lt;div class="note"&gt;More stable learning under class imbalance.&lt;/div&gt;</code></pre>
+<pre><code>&lt;div class="kicker"&gt;Dataset (post-cleaning)&lt;/div&gt;
+&lt;div class="value"&gt;9.19M windows&lt;/div&gt;
+&lt;div class="note"&gt;Sample fraction 1.0 = 9,186,574 labeled windows (30 homes).&lt;/div&gt;</code></pre>
 </div>
 <div class="es-card">
-<pre><code>&lt;div class="kicker"&gt;Current leader (CV macro-F1)&lt;/div&gt;
+<pre><code>&lt;div class="kicker"&gt;Best model (macro-F1 CV)&lt;/div&gt;
 &lt;div class="value"&gt;0.777&lt;/div&gt;
-&lt;div class="note"&gt;Best saved run for the generalized target.&lt;/div&gt;</code></pre>
+&lt;div class="note"&gt;Generalized target; sample fraction 0.40.&lt;/div&gt;</code></pre>
 </div>
 <div class="es-card">
-<pre><code>&lt;div class="kicker"&gt;Data representation&lt;/div&gt;
-&lt;div class="value"&gt;30-event windows&lt;/div&gt;
-&lt;div class="note"&gt;30 homes; 36 numeric features per window.&lt;/div&gt;</code></pre>
+<pre><code>&lt;div class="kicker"&gt;Targets&lt;/div&gt;
+&lt;div class="value"&gt;11 vs 41 classes&lt;/div&gt;
+&lt;div class="note"&gt;Generalized labels outperform specific labels on macro-F1.&lt;/div&gt;</code></pre>
 </div>
 </div>
 <section id="executive-summary" class="level2">
 <h2 class="anchored" data-anchor-id="executive-summary">Executive Summary</h2>
 <p>This project builds a multiclass classifier to recognize daily activities in smart homes from ambient sensor streams (motion, doors, light, etc.). Each training instance is a <strong>feature vector computed over a sliding window of 30 sensor events</strong>, and the model predicts either a fine-grained activity label (41-class) or a generalized activity category (11-class).</p>
-<p>The clearest takeaway from early results is that <strong>generalized labels are substantially more learnable and more stable</strong>, improving macro-F1, weighted-F1, and accuracy in a quick baseline comparison. If the goal is dependable activity recognition rather than strict sub-activity identification, the generalized target is the right default.</p>
+<p>The clearest takeaway from evaluation results is that <strong>generalized labels are substantially more learnable and more stable</strong>, improving macro-F1, weighted-F1, and accuracy in cross-validation. The strongest saved run reaches <strong>macro-F1 (CV) = 0.777</strong> on the generalized target.</p>
 </section>
 <section id="problem-goal" class="level2">
 <h2 class="anchored" data-anchor-id="problem-goal">Problem &amp; Goal</h2>
@@ -250,40 +234,29 @@ DRAFT NOTE (remove for final)
 <li>Source: CASAS smart home ambient sensor dataset (homes <code>csh101</code>–<code>csh130</code>).</li>
 <li>Instances: sliding window of 30 sensor events, summarized into numeric features.</li>
 <li>Features: 36 numeric features per row (plus label columns).</li>
+<li>Total labeled windows used for modeling after label cleanup and filtering: <strong>9,186,574</strong>.</li>
 <li>Labels:
 <ul>
 <li><code>activity</code>: specific activities (41 classes in current pipeline).</li>
 <li><code>activity_general</code>: 11 generalized categories (Hygiene, Leisure, Meal_Prep, etc.).</li>
 </ul></li>
 </ul>
-<div class="callout callout-style-default callout-note callout-titled">
-<div class="callout-header d-flex align-content-center">
-<div class="callout-icon-container">
-<i class="callout-icon"></i>
-</div>
-<div class="callout-title-container flex-fill">
-Note
-</div>
-</div>
-<div class="callout-body-container callout-body">
 <p>Generalization is performed by mapping multiple specific labels into a smaller set (e.g., <code>Cook_Breakfast</code>, <code>Cook_Lunch</code>, <code>Cook_Dinner</code> → <code>Meal_Prep</code>).</p>
-</div>
-</div>
 </section>
 <section id="modeling-approach" class="level2">
 <h2 class="anchored" data-anchor-id="modeling-approach">Modeling Approach</h2>
 <section id="baseline-model" class="level3">
 <h3 class="anchored" data-anchor-id="baseline-model">Baseline Model</h3>
-<p>We use <strong>XGBoost (gradient boosted decision trees)</strong> because it: - handles heterogeneous numeric features well without normalization, - scales to large tabular datasets efficiently (<code>tree_method="hist"</code>), - supports multiclass probabilities (needed for log loss and calibration).</p>
+<p>This work uses <strong>XGBoost (gradient boosted decision trees)</strong> because it: - handles heterogeneous numeric features well without normalization, - scales to large tabular datasets efficiently (<code>tree_method="hist"</code>), - supports multiclass probabilities (needed for log loss and calibration).</p>
 </section>
 <section id="primary-metric" class="level3">
 <h3 class="anchored" data-anchor-id="primary-metric">Primary Metric</h3>
-<p>For reporting, we focus on <strong>macro-F1</strong> because the class distribution is imbalanced and we want each class to matter. We treat accuracy and weighted-F1 as secondary diagnostics.</p>
+<p>The primary metric is <strong>macro-F1</strong> because the class distribution is imbalanced and each class should contribute equally. Accuracy and weighted-F1 are treated as secondary diagnostics.</p>
 </section>
 </section>
 <section id="implementation-selected-code" class="level2">
 <h2 class="anchored" data-anchor-id="implementation-selected-code">Implementation (Selected Code)</h2>
-<p>These are short excerpts that reflect the current pipeline used in <code>notebooks/exploratory.ipynb</code> and <code>scripts/train_final.py</code>.</p>
+<p>These are short excerpts from the training pipeline (<code>scripts/train_final.py</code>).</p>
 <section id="label-cleanup-generalization-polars" class="level3">
 <h3 class="anchored" data-anchor-id="label-cleanup-generalization-polars">Label Cleanup + Generalization (Polars)</h3>
 <div class="sourceCode" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Normalize odd labels like r1.Sleep / r2.Dress and add a generalized target column.</span></span>
@@ -309,16 +282,9 @@ Note
 <span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a><span class="ex">python</span> scripts/train_final.py <span class="at">--api</span> sklearn <span class="at">--target-column</span> activity_general <span class="dt">\</span></span>
 <span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">--sample-fraction</span> 0.05 <span class="at">--n-folds</span> 5 <span class="at">--n-trials</span> 12 <span class="at">--reserve-threads</span> 4 <span class="at">--verbosity</span> 2</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </section>
-<section id="saved-artifacts" class="level3">
-<h3 class="anchored" data-anchor-id="saved-artifacts">Saved Artifacts</h3>
-<pre class="text"><code>models/xgb_native_&lt;target&gt;_f1_macro_&lt;score&gt;_&lt;timestamp&gt;.json
-models/meta_native_&lt;target&gt;_f1_macro_&lt;score&gt;_&lt;timestamp&gt;.json
-models/xgb_sklearn_&lt;target&gt;_f1_macro_&lt;score&gt;_&lt;timestamp&gt;.pkl
-models/meta_sklearn_&lt;target&gt;_f1_macro_&lt;score&gt;_&lt;timestamp&gt;.json</code></pre>
 </section>
-</section>
-<section id="key-results-quick-baseline" class="level2">
-<h2 class="anchored" data-anchor-id="key-results-quick-baseline">Key Results (Quick Baseline)</h2>
+<section id="key-results" class="level2">
+<h2 class="anchored" data-anchor-id="key-results">Key Results</h2>
 <p>The table below compares a lightweight baseline evaluation for the two target choices:</p>
 <table class="caption-top table">
 <colgroup>
@@ -362,32 +328,35 @@ models/meta_sklearn_&lt;target&gt;_f1_macro_&lt;score&gt;_&lt;timestamp&gt;.json
 </section>
 <section id="metrics-saved-training-runs" class="level2">
 <h2 class="anchored" data-anchor-id="metrics-saved-training-runs">Metrics (Saved Training Runs)</h2>
-<p>The table below is auto-generated from the saved run metadata in <code>models/meta_*.json</code> (refresh via <code>python docs/executive_summary/tools/generate_model_metrics_md.py</code>). It reflects the <strong>primary CV score</strong> used during training-time model selection (macro-F1). Runs are sorted by CV macro-F1; the best is bolded.</p>
+<p>The table below is auto-generated from the saved run metadata in <code>models/meta_*.json</code> (refresh via <code>python docs/executive_summary/tools/generate_model_metrics_md.py</code>). It reflects the <strong>primary CV score</strong> used during training-time model selection (macro-F1). Sample fraction is a per-home sampling rate used to manage compute; <strong>sample fraction 1.0 corresponds to 9,186,574 windows</strong> after label cleanup and filtering.</p>
 <!-- AUTO-GENERATED: docs/executive_summary/tools/generate_model_metrics_md.py -->
-<!-- Generated: 2026-04-09 22:44:25 MDT -->
+<!-- Generated: 2026-04-09 23:00:13 MDT -->
 <section id="best-model-current-leader" class="level3">
 <h3 class="anchored" data-anchor-id="best-model-current-leader">Best model (current leader)</h3>
 <ul>
 <li>Model: <strong>XGBoost native</strong></li>
 <li>Target: <strong>Generalized activities (11 classes)</strong></li>
-<li>CV macro-F1: <strong>0.7772</strong> (folds=2)</li>
-<li>Data fraction: 0.4</li>
+<li>CV macro-F1: <strong>0.7772</strong></li>
+<li>Sample fraction: <strong>0.4</strong></li>
 <li>Train macro-F1: 0.8088; train accuracy: 0.8304</li>
 <li>Boosting: 900 rounds (early_stopping_rounds=40)</li>
 <li>Key settings: learning_rate=0.030, max_depth=6, rounds=900</li>
 </ul>
+<p><em>Showing top 5 runs (by CV macro-F1).</em></p>
 <table class="caption-top table">
 <colgroup>
-<col style="width: 16%">
-<col style="width: 16%">
-<col style="width: 22%">
-<col style="width: 22%">
-<col style="width: 22%">
+<col style="width: 13%">
+<col style="width: 13%">
+<col style="width: 18%">
+<col style="width: 18%">
+<col style="width: 18%">
+<col style="width: 18%">
 </colgroup>
 <thead>
 <tr class="header">
 <th>Model</th>
 <th>Target</th>
+<th style="text-align: right;">Sample fraction</th>
 <th style="text-align: right;">Macro-F1 (CV)</th>
 <th style="text-align: right;">Macro-F1 (train)</th>
 <th style="text-align: right;">Accuracy (train)</th>
@@ -395,8 +364,9 @@ models/meta_sklearn_&lt;target&gt;_f1_macro_&lt;score&gt;_&lt;timestamp&gt;.json
 </thead>
 <tbody>
 <tr class="odd">
-<td>XGBoost native</td>
-<td>Generalized activities (11 classes)</td>
+<td><strong>XGBoost native</strong></td>
+<td><strong>Generalized activities (11 classes)</strong></td>
+<td style="text-align: right;">0.4</td>
 <td style="text-align: right;"><strong>0.7772</strong></td>
 <td style="text-align: right;">0.8088</td>
 <td style="text-align: right;">0.8304</td>
@@ -404,6 +374,7 @@ models/meta_sklearn_&lt;target&gt;_f1_macro_&lt;score&gt;_&lt;timestamp&gt;.json
 <tr class="even">
 <td>XGBoost sklearn</td>
 <td>Generalized activities (11 classes)</td>
+<td style="text-align: right;">0.01</td>
 <td style="text-align: right;">0.6221</td>
 <td style="text-align: right;">0.7607</td>
 <td style="text-align: right;">0.8638</td>
@@ -411,6 +382,7 @@ models/meta_sklearn_&lt;target&gt;_f1_macro_&lt;score&gt;_&lt;timestamp&gt;.json
 <tr class="odd">
 <td>XGBoost sklearn</td>
 <td>Generalized activities (11 classes)</td>
+<td style="text-align: right;">0.01</td>
 <td style="text-align: right;">0.6157</td>
 <td style="text-align: right;">0.7607</td>
 <td style="text-align: right;">0.8638</td>
@@ -418,6 +390,7 @@ models/meta_sklearn_&lt;target&gt;_f1_macro_&lt;score&gt;_&lt;timestamp&gt;.json
 <tr class="even">
 <td>XGBoost native</td>
 <td>Generalized activities (11 classes)</td>
+<td style="text-align: right;">0.005</td>
 <td style="text-align: right;">0.5938</td>
 <td style="text-align: right;">0.7583</td>
 <td style="text-align: right;">0.8563</td>
@@ -425,48 +398,13 @@ models/meta_sklearn_&lt;target&gt;_f1_macro_&lt;score&gt;_&lt;timestamp&gt;.json
 <tr class="odd">
 <td>XGBoost native</td>
 <td>Generalized activities (11 classes)</td>
+<td style="text-align: right;">0.005</td>
 <td style="text-align: right;">0.5829</td>
 <td style="text-align: right;">0.7615</td>
 <td style="text-align: right;">0.8591</td>
 </tr>
-<tr class="even">
-<td>XGBoost sklearn</td>
-<td>Generalized activities (10 classes)</td>
-<td style="text-align: right;">0.4814</td>
-<td style="text-align: right;">0.9295</td>
-<td style="text-align: right;">0.9882</td>
-</tr>
-<tr class="odd">
-<td>XGBoost native</td>
-<td>Generalized activities (10 classes)</td>
-<td style="text-align: right;">0.4445</td>
-<td style="text-align: right;">0.5499</td>
-<td style="text-align: right;">0.7474</td>
-</tr>
-<tr class="even">
-<td>XGBoost sklearn</td>
-<td>Generalized activities (11 classes)</td>
-<td style="text-align: right;">N/A</td>
-<td style="text-align: right;">0.7607</td>
-<td style="text-align: right;">0.8638</td>
-</tr>
 </tbody>
 </table>
-<!-- REMOVE_FOR_FINAL:BEGIN validation-caveat -->
-<div class="remove-for-final callout callout-style-default callout-warning callout-titled" title="VALIDATION CAVEAT (remove for final)">
-<div class="callout-header d-flex align-content-center">
-<div class="callout-icon-container">
-<i class="callout-icon"></i>
-</div>
-<div class="callout-title-container flex-fill">
-VALIDATION CAVEAT (remove for final)
-</div>
-</div>
-<div class="callout-body-container callout-body">
-<p>This baseline uses row-level cross validation, which may overestimate true generalization because the data is created from overlapping sliding windows. A more defensible “unseen home” score would use a grouped split by <code>home_id</code>.</p>
-</div>
-</div>
-<!-- REMOVE_FOR_FINAL:END validation-caveat -->
 </section>
 </section>
 <section id="risks-limitations-and-what-would-make-it-better" class="level2">
@@ -477,11 +415,11 @@ VALIDATION CAVEAT (remove for final)
 <li><strong>Extreme class imbalance:</strong> some specific labels are extremely rare; evaluation variance can be misleading.</li>
 <li><strong>Interpretability:</strong> boosted trees are interpretable at the feature level, but not causal; confusion matrices matter.</li>
 </ul>
-<p>Compensations we can make (and should, if this is a final report): - Switch evaluation to <code>GroupKFold</code> by <code>home_id</code> (or leave-one-home-out). - Report both macro-F1 and log loss, plus a confusion matrix for top activities. - Consider a two-stage model: generalized prediction first, then specific within a bucket.</p>
+<p>Opportunities for improvement: - Switch evaluation to <code>GroupKFold</code> by <code>home_id</code> (or leave-one-home-out). - Report both macro-F1 and log loss, plus a confusion matrix for top activities. - Consider a two-stage model: generalized prediction first, then specific within a bucket.</p>
 </section>
-<section id="recommendation" class="level2">
-<h2 class="anchored" data-anchor-id="recommendation">Recommendation</h2>
-<p>Default to training on <strong>generalized labels</strong> (<code>activity_general</code>). If sub-activities are still required, add a second-stage classifier trained only inside each generalized bucket; this keeps the primary model stable and reduces failure modes on rare fine-grained labels.</p>
+<section id="future-improvements" class="level2">
+<h2 class="anchored" data-anchor-id="future-improvements">Future Improvements</h2>
+<p>Future work focuses on strengthening generalization and interpretability: - Evaluate with an “unseen home” protocol (grouped by <code>home_id</code>) to avoid optimistic scores from correlated sliding windows. - Add confusion matrices and per-class support to make failure modes clear to non-technical stakeholders. - Consider a two-stage approach: predict generalized categories first, then predict fine-grained activities within each category.</p>
 
 
 </section>
