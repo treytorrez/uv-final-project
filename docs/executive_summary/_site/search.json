@@ -46,7 +46,7 @@
     "href": "index.html#key-results",
     "title": "Human Activity Recognition (CASAS) Executive Summary",
     "section": "Key Results",
-    "text": "Key Results\nThe table below compares a lightweight baseline evaluation for the two target choices:\n\n\n\n\n\n\n\n\n\n\n\ntarget\nn_classes\ncv_f1_macro_mean\ncv_f1_macro_std\ncv_f1_weighted_mean\ncv_accuracy_mean\n\n\n\n\nactivity_general\n11\n0.7198\n0.0156\n0.7838\n0.7921\n\n\nactivity\n41\n0.6566\n0.0021\n0.6990\n0.7083\n\n\n\nInterpretation: Generalized labels improve macro-F1, weighted-F1, and accuracy. This supports training on activity_general as the main target if reliability is the priority."
+    "text": "Key Results\nThe table below compares a lightweight baseline evaluation for the two target choices:\n\n\n\n\n\n\n\n\n\n\n\ntarget\nn_classes\ncv_f1_macro_mean\ncv_f1_macro_std\ncv_f1_weighted_mean\ncv_accuracy_mean\n\n\n\n\nGeneralized activities\n11\n0.7198\n0.0156\n0.7838\n0.7921\n\n\nSpecific activities\n41\n0.6566\n0.0021\n0.6990\n0.7083\n\n\n\nInterpretation: Generalized labels improve macro-F1, weighted-F1, and accuracy. This supports generalized activity prediction as the primary target when reliability is the priority."
   },
   {
     "objectID": "index.html#metrics-saved-training-runs",

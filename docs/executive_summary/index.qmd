@@ -107,10 +107,10 @@ The table below compares a lightweight baseline evaluation for the two target ch
 
 | target | n_classes | cv_f1_macro_mean | cv_f1_macro_std | cv_f1_weighted_mean | cv_accuracy_mean |
 |---|---:|---:|---:|---:|---:|
-| activity_general | 11 | 0.7198 | 0.0156 | 0.7838 | 0.7921 |
-| activity | 41 | 0.6566 | 0.0021 | 0.6990 | 0.7083 |
+| Generalized activities | 11 | 0.7198 | 0.0156 | 0.7838 | 0.7921 |
+| Specific activities | 41 | 0.6566 | 0.0021 | 0.6990 | 0.7083 |
 
-**Interpretation:** Generalized labels improve macro-F1, weighted-F1, and accuracy. This supports training on `activity_general` as the main target if reliability is the priority.
+**Interpretation:** Generalized labels improve macro-F1, weighted-F1, and accuracy. This supports generalized activity prediction as the primary target when reliability is the priority.
 
 ## Metrics (Saved Training Runs)
 
