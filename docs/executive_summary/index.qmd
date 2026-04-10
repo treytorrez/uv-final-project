@@ -11,9 +11,11 @@ format:
     page-layout: full
 ---
 
-::: {.callout-important}
+<!-- REMOVE_FOR_FINAL:BEGIN mockup -->
+::: {.callout-important title="DRAFT NOTE (remove for final)" .remove-for-final}
 This is a mock-up executive summary. It is meant to be readable and professional first, and fully sourced/complete second. We can tighten claims and swap in final metrics once you decide which target and evaluation protocol you want to report.
 :::
+<!-- REMOVE_FOR_FINAL:END mockup -->
 
 <div class="es-metrics">
   <div class="es-card">
@@ -71,6 +73,50 @@ We use **XGBoost (gradient boosted decision trees)** because it:
 
 For reporting, we focus on **macro-F1** because the class distribution is imbalanced and we want each class to matter. We treat accuracy and weighted-F1 as secondary diagnostics.
 
+## Implementation (Selected Code)
+
+These are short excerpts that reflect the current pipeline used in `notebooks/exploratory.ipynb` and `scripts/train_final.py`.
+
+### Label Cleanup + Generalization (Polars)
+
+```python
+# Normalize odd labels like r1.Sleep / r2.Dress and add a generalized target column.
+df_home = (
+    pl.scan_csv(path)
+    .with_columns(pl.col("activity").str.replace(r"^r[12]\.", "").alias("activity"))
+    .filter(pl.col("activity") != "Other_Activity")
+    .with_columns(pl.col("activity").replace(general_map).alias("activity_general"))
+)
+```
+
+### Memory-Safe Sampling (Per Home)
+
+```python
+# Collect per-home then sample, to avoid materializing all homes at once.
+df_home_sampled = df_home.collect().sample(fraction=0.30, seed=seed, shuffle=True)
+```
+
+### Training Commands (XGBoost)
+
+```bash
+# Train on generalized labels (recommended default from baseline results)
+python scripts/train_final.py --api native --target-column activity_general \
+  --sample-fraction 0.05 --n-folds 5 --n-trials 12 --reserve-threads 4 --verbosity 2
+
+# Alternate branch via sklearn wrapper
+python scripts/train_final.py --api sklearn --target-column activity_general \
+  --sample-fraction 0.05 --n-folds 5 --n-trials 12 --reserve-threads 4 --verbosity 2
+```
+
+### Saved Artifacts
+
+```text
+models/xgb_native_<target>_f1_macro_<score>_<timestamp>.json
+models/meta_native_<target>_f1_macro_<score>_<timestamp>.json
+models/xgb_sklearn_<target>_f1_macro_<score>_<timestamp>.pkl
+models/meta_sklearn_<target>_f1_macro_<score>_<timestamp>.json
+```
+
 ## Key Results (Quick Baseline)
 
 The table below compares a lightweight baseline evaluation for the two target choices:
@@ -82,9 +128,11 @@ The table below compares a lightweight baseline evaluation for the two target ch
 
 **Interpretation:** Generalized labels improve macro-F1, weighted-F1, and accuracy. This supports training on `activity_general` as the main target if reliability is the priority.
 
-::: {.callout-warning}
+<!-- REMOVE_FOR_FINAL:BEGIN validation-caveat -->
+::: {.callout-warning title="VALIDATION CAVEAT (remove for final)" .remove-for-final}
 This baseline uses row-level cross validation, which may overestimate true generalization because the data is created from overlapping sliding windows. A more defensible “unseen home” score would use a grouped split by `home_id`.
 :::
+<!-- REMOVE_FOR_FINAL:END validation-caveat -->
 
 ## Risks, Limitations, and What Would Make It Better
 
@@ -102,12 +150,18 @@ Compensations we can make (and should, if this is a final report):
 
 Default to training on **generalized labels** (`activity_general`). If sub-activities are still required, add a second-stage classifier trained only inside each generalized bucket; this keeps the primary model stable and reduces failure modes on rare fine-grained labels.
 
-## How To Render
+## Render & Publish
 
-Quarto is not currently installed in this environment. Once installed, render the site from repo root:
+### Local render
+
+From repo root:
 
 ```bash
 quarto render docs/executive_summary
 ```
 
 This produces `docs/executive_summary/_site/index.html`.
+
+### GitHub Pages
+
+This repo is configured to render and deploy via GitHub Actions on push (`.github/workflows/quarto-pages.yml`).

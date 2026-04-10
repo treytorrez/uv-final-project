@@ -4,7 +4,7 @@
     "href": "index.html",
     "title": "Human Activity Recognition (CASAS) Executive Summary",
     "section": "",
-    "text": "Important\n\n\n\nThis is a mock-up executive summary. It is meant to be readable and professional first, and fully sourced/complete second. We can tighten claims and swap in final metrics once you decide which target and evaluation protocol you want to report."
+    "text": "DRAFT NOTE (remove for final)\n\n\n\nThis is a mock-up executive summary. It is meant to be readable and professional first, and fully sourced/complete second. We can tighten claims and swap in final metrics once you decide which target and evaluation protocol you want to report."
   },
   {
     "objectID": "index.html#executive-summary",
@@ -35,11 +35,18 @@
     "text": "Modeling Approach\n\nBaseline Model\nWe use XGBoost (gradient boosted decision trees) because it: - handles heterogeneous numeric features well without normalization, - scales to large tabular datasets efficiently (tree_method=\"hist\"), - supports multiclass probabilities (needed for log loss and calibration).\n\n\nPrimary Metric\nFor reporting, we focus on macro-F1 because the class distribution is imbalanced and we want each class to matter. We treat accuracy and weighted-F1 as secondary diagnostics."
   },
   {
+    "objectID": "index.html#implementation-selected-code",
+    "href": "index.html#implementation-selected-code",
+    "title": "Human Activity Recognition (CASAS) Executive Summary",
+    "section": "Implementation (Selected Code)",
+    "text": "Implementation (Selected Code)\nThese are short excerpts that reflect the current pipeline used in notebooks/exploratory.ipynb and scripts/train_final.py.\n\nLabel Cleanup + Generalization (Polars)\n# Normalize odd labels like r1.Sleep / r2.Dress and add a generalized target column.\ndf_home = (\n    pl.scan_csv(path)\n    .with_columns(pl.col(\"activity\").str.replace(r\"^r[12]\\.\", \"\").alias(\"activity\"))\n    .filter(pl.col(\"activity\") != \"Other_Activity\")\n    .with_columns(pl.col(\"activity\").replace(general_map).alias(\"activity_general\"))\n)\n\n\nMemory-Safe Sampling (Per Home)\n# Collect per-home then sample, to avoid materializing all homes at once.\ndf_home_sampled = df_home.collect().sample(fraction=0.30, seed=seed, shuffle=True)\n\n\nTraining Commands (XGBoost)\n# Train on generalized labels (recommended default from baseline results)\npython scripts/train_final.py --api native --target-column activity_general \\\n  --sample-fraction 0.05 --n-folds 5 --n-trials 12 --reserve-threads 4 --verbosity 2\n\n# Alternate branch via sklearn wrapper\npython scripts/train_final.py --api sklearn --target-column activity_general \\\n  --sample-fraction 0.05 --n-folds 5 --n-trials 12 --reserve-threads 4 --verbosity 2\n\n\nSaved Artifacts\nmodels/xgb_native_&lt;target&gt;_f1_macro_&lt;score&gt;_&lt;timestamp&gt;.json\nmodels/meta_native_&lt;target&gt;_f1_macro_&lt;score&gt;_&lt;timestamp&gt;.json\nmodels/xgb_sklearn_&lt;target&gt;_f1_macro_&lt;score&gt;_&lt;timestamp&gt;.pkl\nmodels/meta_sklearn_&lt;target&gt;_f1_macro_&lt;score&gt;_&lt;timestamp&gt;.json"
+  },
+  {
     "objectID": "index.html#key-results-quick-baseline",
     "href": "index.html#key-results-quick-baseline",
     "title": "Human Activity Recognition (CASAS) Executive Summary",
     "section": "Key Results (Quick Baseline)",
-    "text": "Key Results (Quick Baseline)\nThe table below compares a lightweight baseline evaluation for the two target choices:\n\n\n\n\n\n\n\n\n\n\n\ntarget\nn_classes\ncv_f1_macro_mean\ncv_f1_macro_std\ncv_f1_weighted_mean\ncv_accuracy_mean\n\n\n\n\nactivity_general\n11\n0.7198\n0.0156\n0.7838\n0.7921\n\n\nactivity\n41\n0.6566\n0.0021\n0.6990\n0.7083\n\n\n\nInterpretation: Generalized labels improve macro-F1, weighted-F1, and accuracy. This supports training on activity_general as the main target if reliability is the priority.\n\n\n\n\n\n\nWarning\n\n\n\nThis baseline uses row-level cross validation, which may overestimate true generalization because the data is created from overlapping sliding windows. A more defensible “unseen home” score would use a grouped split by home_id."
+    "text": "Key Results (Quick Baseline)\nThe table below compares a lightweight baseline evaluation for the two target choices:\n\n\n\n\n\n\n\n\n\n\n\ntarget\nn_classes\ncv_f1_macro_mean\ncv_f1_macro_std\ncv_f1_weighted_mean\ncv_accuracy_mean\n\n\n\n\nactivity_general\n11\n0.7198\n0.0156\n0.7838\n0.7921\n\n\nactivity\n41\n0.6566\n0.0021\n0.6990\n0.7083\n\n\n\nInterpretation: Generalized labels improve macro-F1, weighted-F1, and accuracy. This supports training on activity_general as the main target if reliability is the priority.\n\n\n\n\n\n\n\nVALIDATION CAVEAT (remove for final)\n\n\n\nThis baseline uses row-level cross validation, which may overestimate true generalization because the data is created from overlapping sliding windows. A more defensible “unseen home” score would use a grouped split by home_id."
   },
   {
     "objectID": "index.html#risks-limitations-and-what-would-make-it-better",
@@ -56,10 +63,10 @@
     "text": "Recommendation\nDefault to training on generalized labels (activity_general). If sub-activities are still required, add a second-stage classifier trained only inside each generalized bucket; this keeps the primary model stable and reduces failure modes on rare fine-grained labels."
   },
   {
-    "objectID": "index.html#how-to-render",
-    "href": "index.html#how-to-render",
+    "objectID": "index.html#render-publish",
+    "href": "index.html#render-publish",
     "title": "Human Activity Recognition (CASAS) Executive Summary",
-    "section": "How To Render",
-    "text": "How To Render\nQuarto is not currently installed in this environment. Once installed, render the site from repo root:\nquarto render docs/executive_summary\nThis produces docs/executive_summary/_site/index.html."
+    "section": "Render & Publish",
+    "text": "Render & Publish\n\nLocal render\nFrom repo root:\nquarto render docs/executive_summary\nThis produces docs/executive_summary/_site/index.html.\n\n\nGitHub Pages\nThis repo is configured to render and deploy via GitHub Actions on push (.github/workflows/quarto-pages.yml)."
   }
 ]

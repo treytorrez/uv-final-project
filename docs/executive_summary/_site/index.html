@@ -152,10 +152,21 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#baseline-model" id="toc-baseline-model" class="nav-link" data-scroll-target="#baseline-model">Baseline Model</a></li>
   <li><a href="#primary-metric" id="toc-primary-metric" class="nav-link" data-scroll-target="#primary-metric">Primary Metric</a></li>
   </ul></li>
+  <li><a href="#implementation-selected-code" id="toc-implementation-selected-code" class="nav-link" data-scroll-target="#implementation-selected-code">Implementation (Selected Code)</a>
+  <ul class="collapse">
+  <li><a href="#label-cleanup-generalization-polars" id="toc-label-cleanup-generalization-polars" class="nav-link" data-scroll-target="#label-cleanup-generalization-polars">Label Cleanup + Generalization (Polars)</a></li>
+  <li><a href="#memory-safe-sampling-per-home" id="toc-memory-safe-sampling-per-home" class="nav-link" data-scroll-target="#memory-safe-sampling-per-home">Memory-Safe Sampling (Per Home)</a></li>
+  <li><a href="#training-commands-xgboost" id="toc-training-commands-xgboost" class="nav-link" data-scroll-target="#training-commands-xgboost">Training Commands (XGBoost)</a></li>
+  <li><a href="#saved-artifacts" id="toc-saved-artifacts" class="nav-link" data-scroll-target="#saved-artifacts">Saved Artifacts</a></li>
+  </ul></li>
   <li><a href="#key-results-quick-baseline" id="toc-key-results-quick-baseline" class="nav-link" data-scroll-target="#key-results-quick-baseline">Key Results (Quick Baseline)</a></li>
   <li><a href="#risks-limitations-and-what-would-make-it-better" id="toc-risks-limitations-and-what-would-make-it-better" class="nav-link" data-scroll-target="#risks-limitations-and-what-would-make-it-better">Risks, Limitations, and What Would Make It Better</a></li>
   <li><a href="#recommendation" id="toc-recommendation" class="nav-link" data-scroll-target="#recommendation">Recommendation</a></li>
-  <li><a href="#how-to-render" id="toc-how-to-render" class="nav-link" data-scroll-target="#how-to-render">How To Render</a></li>
+  <li><a href="#render-publish" id="toc-render-publish" class="nav-link" data-scroll-target="#render-publish">Render &amp; Publish</a>
+  <ul class="collapse">
+  <li><a href="#local-render" id="toc-local-render" class="nav-link" data-scroll-target="#local-render">Local render</a></li>
+  <li><a href="#github-pages" id="toc-github-pages" class="nav-link" data-scroll-target="#github-pages">GitHub Pages</a></li>
+  </ul></li>
   </ul>
 </nav>
 </nav>
@@ -192,19 +203,21 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </header>
 
 
-<div class="callout callout-style-default callout-important callout-titled">
+<!-- REMOVE_FOR_FINAL:BEGIN mockup -->
+<div class="remove-for-final callout callout-style-default callout-important callout-titled" title="DRAFT NOTE (remove for final)">
 <div class="callout-header d-flex align-content-center">
 <div class="callout-icon-container">
 <i class="callout-icon"></i>
 </div>
 <div class="callout-title-container flex-fill">
-Important
+DRAFT NOTE (remove for final)
 </div>
 </div>
 <div class="callout-body-container callout-body">
 <p>This is a mock-up executive summary. It is meant to be readable and professional first, and fully sourced/complete second. We can tighten claims and swap in final metrics once you decide which target and evaluation protocol you want to report.</p>
 </div>
 </div>
+<!-- REMOVE_FOR_FINAL:END mockup -->
 <div class="es-metrics">
 <div class="es-card">
 <pre><code>&lt;div class="kicker"&gt;Targets considered&lt;/div&gt;
@@ -269,6 +282,42 @@ Note
 <p>For reporting, we focus on <strong>macro-F1</strong> because the class distribution is imbalanced and we want each class to matter. We treat accuracy and weighted-F1 as secondary diagnostics.</p>
 </section>
 </section>
+<section id="implementation-selected-code" class="level2">
+<h2 class="anchored" data-anchor-id="implementation-selected-code">Implementation (Selected Code)</h2>
+<p>These are short excerpts that reflect the current pipeline used in <code>notebooks/exploratory.ipynb</code> and <code>scripts/train_final.py</code>.</p>
+<section id="label-cleanup-generalization-polars" class="level3">
+<h3 class="anchored" data-anchor-id="label-cleanup-generalization-polars">Label Cleanup + Generalization (Polars)</h3>
+<div class="sourceCode" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Normalize odd labels like r1.Sleep / r2.Dress and add a generalized target column.</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>df_home <span class="op">=</span> (</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    pl.scan_csv(path)</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>    .with_columns(pl.col(<span class="st">"activity"</span>).<span class="bu">str</span>.replace(<span class="vs">r"</span><span class="dv">^</span><span class="vs">r</span><span class="pp">[12]</span><span class="ch">\.</span><span class="vs">"</span>, <span class="st">""</span>).alias(<span class="st">"activity"</span>))</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>    .<span class="bu">filter</span>(pl.col(<span class="st">"activity"</span>) <span class="op">!=</span> <span class="st">"Other_Activity"</span>)</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>    .with_columns(pl.col(<span class="st">"activity"</span>).replace(general_map).alias(<span class="st">"activity_general"</span>))</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</section>
+<section id="memory-safe-sampling-per-home" class="level3">
+<h3 class="anchored" data-anchor-id="memory-safe-sampling-per-home">Memory-Safe Sampling (Per Home)</h3>
+<div class="sourceCode" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Collect per-home then sample, to avoid materializing all homes at once.</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>df_home_sampled <span class="op">=</span> df_home.collect().sample(fraction<span class="op">=</span><span class="fl">0.30</span>, seed<span class="op">=</span>seed, shuffle<span class="op">=</span><span class="va">True</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</section>
+<section id="training-commands-xgboost" class="level3">
+<h3 class="anchored" data-anchor-id="training-commands-xgboost">Training Commands (XGBoost)</h3>
+<div class="sourceCode" id="cb6"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Train on generalized labels (recommended default from baseline results)</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="ex">python</span> scripts/train_final.py <span class="at">--api</span> native <span class="at">--target-column</span> activity_general <span class="dt">\</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">--sample-fraction</span> 0.05 <span class="at">--n-folds</span> 5 <span class="at">--n-trials</span> 12 <span class="at">--reserve-threads</span> 4 <span class="at">--verbosity</span> 2</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Alternate branch via sklearn wrapper</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a><span class="ex">python</span> scripts/train_final.py <span class="at">--api</span> sklearn <span class="at">--target-column</span> activity_general <span class="dt">\</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">--sample-fraction</span> 0.05 <span class="at">--n-folds</span> 5 <span class="at">--n-trials</span> 12 <span class="at">--reserve-threads</span> 4 <span class="at">--verbosity</span> 2</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</section>
+<section id="saved-artifacts" class="level3">
+<h3 class="anchored" data-anchor-id="saved-artifacts">Saved Artifacts</h3>
+<pre class="text"><code>models/xgb_native_&lt;target&gt;_f1_macro_&lt;score&gt;_&lt;timestamp&gt;.json
+models/meta_native_&lt;target&gt;_f1_macro_&lt;score&gt;_&lt;timestamp&gt;.json
+models/xgb_sklearn_&lt;target&gt;_f1_macro_&lt;score&gt;_&lt;timestamp&gt;.pkl
+models/meta_sklearn_&lt;target&gt;_f1_macro_&lt;score&gt;_&lt;timestamp&gt;.json</code></pre>
+</section>
+</section>
 <section id="key-results-quick-baseline" class="level2">
 <h2 class="anchored" data-anchor-id="key-results-quick-baseline">Key Results (Quick Baseline)</h2>
 <p>The table below compares a lightweight baseline evaluation for the two target choices:</p>
@@ -311,19 +360,21 @@ Note
 </tbody>
 </table>
 <p><strong>Interpretation:</strong> Generalized labels improve macro-F1, weighted-F1, and accuracy. This supports training on <code>activity_general</code> as the main target if reliability is the priority.</p>
-<div class="callout callout-style-default callout-warning callout-titled">
+<!-- REMOVE_FOR_FINAL:BEGIN validation-caveat -->
+<div class="remove-for-final callout callout-style-default callout-warning callout-titled" title="VALIDATION CAVEAT (remove for final)">
 <div class="callout-header d-flex align-content-center">
 <div class="callout-icon-container">
 <i class="callout-icon"></i>
 </div>
 <div class="callout-title-container flex-fill">
-Warning
+VALIDATION CAVEAT (remove for final)
 </div>
 </div>
 <div class="callout-body-container callout-body">
 <p>This baseline uses row-level cross validation, which may overestimate true generalization because the data is created from overlapping sliding windows. A more defensible “unseen home” score would use a grouped split by <code>home_id</code>.</p>
 </div>
 </div>
+<!-- REMOVE_FOR_FINAL:END validation-caveat -->
 </section>
 <section id="risks-limitations-and-what-would-make-it-better" class="level2">
 <h2 class="anchored" data-anchor-id="risks-limitations-and-what-would-make-it-better">Risks, Limitations, and What Would Make It Better</h2>
@@ -339,13 +390,20 @@ Warning
 <h2 class="anchored" data-anchor-id="recommendation">Recommendation</h2>
 <p>Default to training on <strong>generalized labels</strong> (<code>activity_general</code>). If sub-activities are still required, add a second-stage classifier trained only inside each generalized bucket; this keeps the primary model stable and reduces failure modes on rare fine-grained labels.</p>
 </section>
-<section id="how-to-render" class="level2">
-<h2 class="anchored" data-anchor-id="how-to-render">How To Render</h2>
-<p>Quarto is not currently installed in this environment. Once installed, render the site from repo root:</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="ex">quarto</span> render docs/executive_summary</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<section id="render-publish" class="level2">
+<h2 class="anchored" data-anchor-id="render-publish">Render &amp; Publish</h2>
+<section id="local-render" class="level3">
+<h3 class="anchored" data-anchor-id="local-render">Local render</h3>
+<p>From repo root:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="ex">quarto</span> render docs/executive_summary</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>This produces <code>docs/executive_summary/_site/index.html</code>.</p>
+</section>
+<section id="github-pages" class="level3">
+<h3 class="anchored" data-anchor-id="github-pages">GitHub Pages</h3>
+<p>This repo is configured to render and deploy via GitHub Actions on push (<code>.github/workflows/quarto-pages.yml</code>).</p>
 
 
+</section>
 </section>
 
 </main> <!-- /main -->
