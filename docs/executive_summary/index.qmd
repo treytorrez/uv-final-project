@@ -128,6 +128,12 @@ The table below compares a lightweight baseline evaluation for the two target ch
 
 **Interpretation:** Generalized labels improve macro-F1, weighted-F1, and accuracy. This supports training on `activity_general` as the main target if reliability is the priority.
 
+## Metrics (Saved Training Runs)
+
+The table below is auto-generated from the saved run metadata in `models/meta_*.json` (refresh via `python docs/executive_summary/tools/generate_model_metrics_md.py`). It reflects the **primary CV score** used during training-time model selection (currently macro-F1 with 5-fold KFold on the sampled training set). Rows with `N/A` indicate a run that did not produce a valid CV score, but are kept for traceability.
+
+{{< include _includes/model_metrics.md >}}
+
 <!-- REMOVE_FOR_FINAL:BEGIN validation-caveat -->
 ::: {.callout-warning title="VALIDATION CAVEAT (remove for final)" .remove-for-final}
 This baseline uses row-level cross validation, which may overestimate true generalization because the data is created from overlapping sliding windows. A more defensible “unseen home” score would use a grouped split by `home_id`.

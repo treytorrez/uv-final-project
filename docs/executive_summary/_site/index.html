@@ -160,6 +160,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#saved-artifacts" id="toc-saved-artifacts" class="nav-link" data-scroll-target="#saved-artifacts">Saved Artifacts</a></li>
   </ul></li>
   <li><a href="#key-results-quick-baseline" id="toc-key-results-quick-baseline" class="nav-link" data-scroll-target="#key-results-quick-baseline">Key Results (Quick Baseline)</a></li>
+  <li><a href="#metrics-saved-training-runs" id="toc-metrics-saved-training-runs" class="nav-link" data-scroll-target="#metrics-saved-training-runs">Metrics (Saved Training Runs)</a></li>
   <li><a href="#risks-limitations-and-what-would-make-it-better" id="toc-risks-limitations-and-what-would-make-it-better" class="nav-link" data-scroll-target="#risks-limitations-and-what-would-make-it-better">Risks, Limitations, and What Would Make It Better</a></li>
   <li><a href="#recommendation" id="toc-recommendation" class="nav-link" data-scroll-target="#recommendation">Recommendation</a></li>
   <li><a href="#render-publish" id="toc-render-publish" class="nav-link" data-scroll-target="#render-publish">Render &amp; Publish</a>
@@ -360,6 +361,103 @@ models/meta_sklearn_&lt;target&gt;_f1_macro_&lt;score&gt;_&lt;timestamp&gt;.json
 </tbody>
 </table>
 <p><strong>Interpretation:</strong> Generalized labels improve macro-F1, weighted-F1, and accuracy. This supports training on <code>activity_general</code> as the main target if reliability is the priority.</p>
+</section>
+<section id="metrics-saved-training-runs" class="level2">
+<h2 class="anchored" data-anchor-id="metrics-saved-training-runs">Metrics (Saved Training Runs)</h2>
+<p>The table below is auto-generated from the saved run metadata in <code>models/meta_*.json</code> (refresh via <code>python docs/executive_summary/tools/generate_model_metrics_md.py</code>). It reflects the <strong>primary CV score</strong> used during training-time model selection (currently macro-F1 with 5-fold KFold on the sampled training set). Rows with <code>N/A</code> indicate a run that did not produce a valid CV score, but are kept for traceability.</p>
+<!-- AUTO-GENERATED: docs/executive_summary/tools/generate_model_metrics_md.py -->
+<!-- Generated: 2026-04-09 20:38:18 MDT -->
+<p><strong>Best CV macro-F1:</strong> <code>0.6221</code> (<code>sklearn</code> / <code>activity_general</code> at <code>20260408_221358</code>)</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 8%">
+<col style="width: 8%">
+<col style="width: 8%">
+<col style="width: 11%">
+<col style="width: 11%">
+<col style="width: 11%">
+<col style="width: 11%">
+<col style="width: 11%">
+<col style="width: 11%">
+<col style="width: 8%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>timestamp</th>
+<th>api</th>
+<th>target</th>
+<th style="text-align: right;">sample_fraction</th>
+<th style="text-align: right;">threads</th>
+<th style="text-align: right;">cv_macro_f1</th>
+<th style="text-align: right;">train_macro_f1</th>
+<th style="text-align: right;">train_accuracy</th>
+<th style="text-align: right;">n_classes</th>
+<th>meta_file</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>20260408_221512</code></td>
+<td><code>native</code></td>
+<td><code>activity_general</code></td>
+<td style="text-align: right;">0.005</td>
+<td style="text-align: right;">12</td>
+<td style="text-align: right;">0.5829</td>
+<td style="text-align: right;">0.7615</td>
+<td style="text-align: right;">0.8591</td>
+<td style="text-align: right;">11</td>
+<td><code>meta_native_activity_general_f1_macro_0.5829_20260408_221512.json</code></td>
+</tr>
+<tr class="even">
+<td><code>20260408_221358</code></td>
+<td><code>sklearn</code></td>
+<td><code>activity_general</code></td>
+<td style="text-align: right;">0.01</td>
+<td style="text-align: right;">12</td>
+<td style="text-align: right;">0.6221</td>
+<td style="text-align: right;">0.7607</td>
+<td style="text-align: right;">0.8638</td>
+<td style="text-align: right;">11</td>
+<td><code>meta_sklearn_activity_general_f1_macro_0.6221_20260408_221358.json</code></td>
+</tr>
+<tr class="odd">
+<td><code>20260408_221101</code></td>
+<td><code>sklearn</code></td>
+<td><code>activity_general</code></td>
+<td style="text-align: right;">0.01</td>
+<td style="text-align: right;">12</td>
+<td style="text-align: right;">N/A</td>
+<td style="text-align: right;">0.7607</td>
+<td style="text-align: right;">0.8638</td>
+<td style="text-align: right;">11</td>
+<td><code>meta_sklearn_activity_general_f1_macro_nan_20260408_221101.json</code></td>
+</tr>
+<tr class="even">
+<td><code>20260408_215912</code></td>
+<td><code>native</code></td>
+<td><code>activity_general</code></td>
+<td style="text-align: right;">0.005</td>
+<td style="text-align: right;">12</td>
+<td style="text-align: right;">0.5938</td>
+<td style="text-align: right;">0.7583</td>
+<td style="text-align: right;">0.8563</td>
+<td style="text-align: right;">11</td>
+<td><code>meta_native_activity_general_f1_macro_0.5938_20260408_215912.json</code></td>
+</tr>
+<tr class="odd">
+<td><code>20260408_215753</code></td>
+<td><code>sklearn</code></td>
+<td><code>activity_general</code></td>
+<td style="text-align: right;">0.01</td>
+<td style="text-align: right;">12</td>
+<td style="text-align: right;">0.6157</td>
+<td style="text-align: right;">0.7607</td>
+<td style="text-align: right;">0.8638</td>
+<td style="text-align: right;">11</td>
+<td><code>meta_sklearn_activity_general_f1_macro_0.6157_20260408_215753.json</code></td>
+</tr>
+</tbody>
+</table>
 <!-- REMOVE_FOR_FINAL:BEGIN validation-caveat -->
 <div class="remove-for-final callout callout-style-default callout-warning callout-titled" title="VALIDATION CAVEAT (remove for final)">
 <div class="callout-header d-flex align-content-center">

@@ -5,6 +5,7 @@ on:
     branches: [master, main]
     paths:
       - "docs/executive_summary/**"
+      - "models/meta_*.json"
       - ".github/workflows/quarto-pages.yml"
   workflow_dispatch:
 
@@ -26,6 +27,10 @@ jobs:
 
       - name: Set Up Quarto
         uses: quarto-dev/quarto-actions/setup@v2
+
+      - name: Generate Metrics Table
+        run: |
+          python docs/executive_summary/tools/generate_model_metrics_md.py
 
       - name: Render Site
         run: |

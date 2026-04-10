@@ -38,6 +38,9 @@ DEFAULT_LEARNING_RATE: float = 0.05  # Slightly lower than common 0.1 default.
 DEFAULT_N_TRIALS: int = 12
 DEFAULT_RESERVE_THREADS: int = 4
 
+DEFAULT_NUM_BOOST_ROUND: int = 800
+DEFAULT_EARLY_STOPPING_ROUNDS: int = 40
+
 DATA_GLOB: str = "data/raw/csh*/csh*.ann.features.csv"
 MODELS_DIR: Path = Path("models")
 
@@ -317,6 +320,10 @@ def train_native_api(
     seed: int,
     train_threads: int,
     verbosity: int,
+    num_boost_round: int = DEFAULT_NUM_BOOST_ROUND,
+    early_stopping_rounds: int = DEFAULT_EARLY_STOPPING_ROUNDS,
+    learning_rate: float | None = None,
+    force_final_rounds: bool = False,
 ) -> tuple[xgb.Booster, float, dict[str, Any]]:
     """Train/tune with native xgb.train and xgb.cv."""
     dtrain = xgb.DMatrix(X, label=y)
@@ -345,16 +352,18 @@ def train_native_api(
             "nthread": train_threads,
             "verbosity": verbosity,
         }
+        if learning_rate is not None:
+            params["learning_rate"] = float(learning_rate)
 
         cv_result = xgb.cv(
             params=params,
             dtrain=dtrain,
-            num_boost_round=800,
+            num_boost_round=num_boost_round,
             folds=folds,
             metrics=("mlogloss",),
             custom_metric=macro_f1_eval,
             maximize=True,
-            early_stopping_rounds=40,
+            early_stopping_rounds=early_stopping_rounds,
             seed=seed,
             verbose_eval=100 if verbosity >= 2 else False,
         )
@@ -373,10 +382,11 @@ def train_native_api(
         msg = "Native search failed to find valid boosting rounds."
         raise RuntimeError(msg)
 
+    final_rounds = num_boost_round if force_final_rounds else best_rounds
     model = xgb.train(
         params=best_params,
         dtrain=dtrain,
-        num_boost_round=best_rounds,
+        num_boost_round=final_rounds,
         evals=[(dtrain, "train")],
         verbose_eval=100 if verbosity >= 2 else False,
     )
@@ -385,6 +395,11 @@ def train_native_api(
         "best_params": best_params,
         "best_cv_f1_macro": best_score,
         "best_num_boost_round": best_rounds,
+        "requested_num_boost_round": num_boost_round,
+        "early_stopping_rounds": early_stopping_rounds,
+        "learning_rate_override": learning_rate,
+        "final_num_boost_round": final_rounds,
+        "force_final_rounds": force_final_rounds,
     }
     return model, best_score, details
 
@@ -496,6 +511,29 @@ def parse_args() -> argparse.Namespace:
         help=f"Random search trials per branch (default: {DEFAULT_N_TRIALS}).",
     )
     parser.add_argument(
+        "--num-boost-round",
+        type=int,
+        default=DEFAULT_NUM_BOOST_ROUND,
+        help=f"Native API max boosting rounds for CV (default: {DEFAULT_NUM_BOOST_ROUND}).",
+    )
+    parser.add_argument(
+        "--early-stopping-rounds",
+        type=int,
+        default=DEFAULT_EARLY_STOPPING_ROUNDS,
+        help=f"Native API early stopping rounds for CV (default: {DEFAULT_EARLY_STOPPING_ROUNDS}).",
+    )
+    parser.add_argument(
+        "--learning-rate",
+        type=float,
+        default=None,
+        help="Optional override for native API learning_rate (applies to all native trials).",
+    )
+    parser.add_argument(
+        "--force-final-rounds",
+        action="store_true",
+        help="Native API: train final model with --num-boost-round (instead of CV-selected best).",
+    )
+    parser.add_argument(
         "--seed",
         type=int,
         default=DEFAULT_RANDOM_SEED,
@@ -554,6 +592,10 @@ def main() -> None:
             seed=args.seed,
             train_threads=train_threads,
             verbosity=args.verbosity,
+            num_boost_round=args.num_boost_round,
+            early_stopping_rounds=args.early_stopping_rounds,
+            learning_rate=args.learning_rate,
+            force_final_rounds=args.force_final_rounds,
         )
     else:
         model, best_cv_metric, details = train_sklearn_api(
