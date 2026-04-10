@@ -4,7 +4,7 @@
     "href": "index.html",
     "title": "Human Activity Recognition (CASAS) Executive Summary",
     "section": "",
-    "text": "&lt;div class=\"kicker\"&gt;Dataset (post-cleaning)&lt;/div&gt;\n&lt;div class=\"value\"&gt;9.19M windows&lt;/div&gt;\n&lt;div class=\"note\"&gt;Sample fraction 1.0 = 9,186,574 labeled windows (30 homes).&lt;/div&gt;\n\n\n&lt;div class=\"kicker\"&gt;Best model (macro-F1 CV)&lt;/div&gt;\n&lt;div class=\"value\"&gt;0.777&lt;/div&gt;\n&lt;div class=\"note\"&gt;Generalized target; sample fraction 0.40.&lt;/div&gt;\n\n\n&lt;div class=\"kicker\"&gt;Targets&lt;/div&gt;\n&lt;div class=\"value\"&gt;11 vs 41 classes&lt;/div&gt;\n&lt;div class=\"note\"&gt;Generalized labels outperform specific labels on macro-F1.&lt;/div&gt;"
+    "text": "Dataset (post-cleaning)\n\n\n9.19M windows\n\n\nSample fraction 1.0 = 9,186,574 labeled windows (30 homes).\n\n\n\n\nBest model (macro-F1 CV)\n\n\n0.777\n\n\nGeneralized target; sample fraction 0.40.\n\n\n\n\nTargets\n\n\n11 vs 41 classes\n\n\nGeneralized labels outperform specific labels on macro-F1."
   },
   {
     "objectID": "index.html#executive-summary",

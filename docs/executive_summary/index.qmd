@@ -11,23 +11,43 @@ format:
     page-layout: full
 ---
 
-<div class="es-metrics">
-  <div class="es-card">
-    <div class="kicker">Dataset (post-cleaning)</div>
-    <div class="value">9.19M windows</div>
-    <div class="note">Sample fraction 1.0 = 9,186,574 labeled windows (30 homes).</div>
-  </div>
-  <div class="es-card">
-    <div class="kicker">Best model (macro-F1 CV)</div>
-    <div class="value">0.777</div>
-    <div class="note">Generalized target; sample fraction 0.40.</div>
-  </div>
-  <div class="es-card">
-    <div class="kicker">Targets</div>
-    <div class="value">11 vs 41 classes</div>
-    <div class="note">Generalized labels outperform specific labels on macro-F1.</div>
-  </div>
-</div>
+::: {.es-metrics}
+::: {.es-card}
+::: {.kicker}
+Dataset (post-cleaning)
+:::
+::: {.value}
+9.19M windows
+:::
+::: {.note}
+Sample fraction 1.0 = 9,186,574 labeled windows (30 homes).
+:::
+:::
+
+::: {.es-card}
+::: {.kicker}
+Best model (macro-F1 CV)
+:::
+::: {.value}
+0.777
+:::
+::: {.note}
+Generalized target; sample fraction 0.40.
+:::
+:::
+
+::: {.es-card}
+::: {.kicker}
+Targets
+:::
+::: {.value}
+11 vs 41 classes
+:::
+::: {.note}
+Generalized labels outperform specific labels on macro-F1.
+:::
+:::
+:::
 
 ## Executive Summary
 

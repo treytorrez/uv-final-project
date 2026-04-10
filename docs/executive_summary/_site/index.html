@@ -75,7 +75,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="site_libs/quarto-html/quarto-syntax-highlighting-dark-befe23ebd2f54d8af2c8a89d1a1611f1.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="site_libs/bootstrap/bootstrap-e374fa848029b5b83087bf1a9c9287a6.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="dark">
+<link href="site_libs/bootstrap/bootstrap-db524e89a7eeecf20c2cf49815434b6c.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="dark">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -203,19 +203,37 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <div class="es-metrics">
 <div class="es-card">
-<pre><code>&lt;div class="kicker"&gt;Dataset (post-cleaning)&lt;/div&gt;
-&lt;div class="value"&gt;9.19M windows&lt;/div&gt;
-&lt;div class="note"&gt;Sample fraction 1.0 = 9,186,574 labeled windows (30 homes).&lt;/div&gt;</code></pre>
+<div class="kicker">
+<p>Dataset (post-cleaning)</p>
+</div>
+<div class="value">
+<p>9.19M windows</p>
+</div>
+<div class="note">
+<p>Sample fraction 1.0 = 9,186,574 labeled windows (30 homes).</p>
+</div>
 </div>
 <div class="es-card">
-<pre><code>&lt;div class="kicker"&gt;Best model (macro-F1 CV)&lt;/div&gt;
-&lt;div class="value"&gt;0.777&lt;/div&gt;
-&lt;div class="note"&gt;Generalized target; sample fraction 0.40.&lt;/div&gt;</code></pre>
+<div class="kicker">
+<p>Best model (macro-F1 CV)</p>
+</div>
+<div class="value">
+<p>0.777</p>
+</div>
+<div class="note">
+<p>Generalized target; sample fraction 0.40.</p>
+</div>
 </div>
 <div class="es-card">
-<pre><code>&lt;div class="kicker"&gt;Targets&lt;/div&gt;
-&lt;div class="value"&gt;11 vs 41 classes&lt;/div&gt;
-&lt;div class="note"&gt;Generalized labels outperform specific labels on macro-F1.&lt;/div&gt;</code></pre>
+<div class="kicker">
+<p>Targets</p>
+</div>
+<div class="value">
+<p>11 vs 41 classes</p>
+</div>
+<div class="note">
+<p>Generalized labels outperform specific labels on macro-F1.</p>
+</div>
 </div>
 </div>
 <section id="executive-summary" class="level2">
@@ -259,28 +277,28 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>These are short excerpts from the training pipeline (<code>scripts/train_final.py</code>).</p>
 <section id="label-cleanup-generalization-polars" class="level3">
 <h3 class="anchored" data-anchor-id="label-cleanup-generalization-polars">Label Cleanup + Generalization (Polars)</h3>
-<div class="sourceCode" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Normalize odd labels like r1.Sleep / r2.Dress and add a generalized target column.</span></span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>df_home <span class="op">=</span> (</span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    pl.scan_csv(path)</span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>    .with_columns(pl.col(<span class="st">"activity"</span>).<span class="bu">str</span>.replace(<span class="vs">r"</span><span class="dv">^</span><span class="vs">r</span><span class="pp">[12]</span><span class="ch">\.</span><span class="vs">"</span>, <span class="st">""</span>).alias(<span class="st">"activity"</span>))</span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>    .<span class="bu">filter</span>(pl.col(<span class="st">"activity"</span>) <span class="op">!=</span> <span class="st">"Other_Activity"</span>)</span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>    .with_columns(pl.col(<span class="st">"activity"</span>).replace(general_map).alias(<span class="st">"activity_general"</span>))</span>
-<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Normalize odd labels like r1.Sleep / r2.Dress and add a generalized target column.</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>df_home <span class="op">=</span> (</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>    pl.scan_csv(path)</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    .with_columns(pl.col(<span class="st">"activity"</span>).<span class="bu">str</span>.replace(<span class="vs">r"</span><span class="dv">^</span><span class="vs">r</span><span class="pp">[12]</span><span class="ch">\.</span><span class="vs">"</span>, <span class="st">""</span>).alias(<span class="st">"activity"</span>))</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>    .<span class="bu">filter</span>(pl.col(<span class="st">"activity"</span>) <span class="op">!=</span> <span class="st">"Other_Activity"</span>)</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    .with_columns(pl.col(<span class="st">"activity"</span>).replace(general_map).alias(<span class="st">"activity_general"</span>))</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </section>
 <section id="memory-safe-sampling-per-home" class="level3">
 <h3 class="anchored" data-anchor-id="memory-safe-sampling-per-home">Memory-Safe Sampling (Per Home)</h3>
-<div class="sourceCode" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Collect per-home then sample, to avoid materializing all homes at once.</span></span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>df_home_sampled <span class="op">=</span> df_home.collect().sample(fraction<span class="op">=</span><span class="fl">0.30</span>, seed<span class="op">=</span>seed, shuffle<span class="op">=</span><span class="va">True</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Collect per-home then sample, to avoid materializing all homes at once.</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>df_home_sampled <span class="op">=</span> df_home.collect().sample(fraction<span class="op">=</span><span class="fl">0.30</span>, seed<span class="op">=</span>seed, shuffle<span class="op">=</span><span class="va">True</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </section>
 <section id="training-commands-xgboost" class="level3">
 <h3 class="anchored" data-anchor-id="training-commands-xgboost">Training Commands (XGBoost)</h3>
-<div class="sourceCode" id="cb6"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Train on generalized labels (recommended default from baseline results)</span></span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="ex">python</span> scripts/train_final.py <span class="at">--api</span> native <span class="at">--target-column</span> activity_general <span class="dt">\</span></span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">--sample-fraction</span> 0.05 <span class="at">--n-folds</span> 5 <span class="at">--n-trials</span> 12 <span class="at">--reserve-threads</span> 4 <span class="at">--verbosity</span> 2</span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Alternate branch via sklearn wrapper</span></span>
-<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a><span class="ex">python</span> scripts/train_final.py <span class="at">--api</span> sklearn <span class="at">--target-column</span> activity_general <span class="dt">\</span></span>
-<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">--sample-fraction</span> 0.05 <span class="at">--n-folds</span> 5 <span class="at">--n-trials</span> 12 <span class="at">--reserve-threads</span> 4 <span class="at">--verbosity</span> 2</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Train on generalized labels (recommended default from baseline results)</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="ex">python</span> scripts/train_final.py <span class="at">--api</span> native <span class="at">--target-column</span> activity_general <span class="dt">\</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">--sample-fraction</span> 0.05 <span class="at">--n-folds</span> 5 <span class="at">--n-trials</span> 12 <span class="at">--reserve-threads</span> 4 <span class="at">--verbosity</span> 2</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Alternate branch via sklearn wrapper</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="ex">python</span> scripts/train_final.py <span class="at">--api</span> sklearn <span class="at">--target-column</span> activity_general <span class="dt">\</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">--sample-fraction</span> 0.05 <span class="at">--n-folds</span> 5 <span class="at">--n-trials</span> 12 <span class="at">--reserve-threads</span> 4 <span class="at">--verbosity</span> 2</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </section>
 </section>
 <section id="key-results" class="level2">

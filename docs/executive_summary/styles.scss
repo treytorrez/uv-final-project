@@ -82,6 +82,13 @@ a {
   margin-top: 6px;
 }
 
+/* Pandoc wraps fenced-div text in <p>; keep cards tight. */
+.es-card .kicker p,
+.es-card .value p,
+.es-card .note p {
+  margin: 0;
+}
+
 /* Headings: a touch more contrast and spacing */
 h1, h2, h3 {
   letter-spacing: -0.01em;
