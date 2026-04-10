@@ -1,0 +1,22 @@
+
+╭╴ treyt via  master at …/uv-final-project took  2m6s via   3.13.12 (uv-final-project) ───────────────────────────────────────────────────────────── using zsh
+╰─󰍟 python scripts/train_final.py --api native --reserve-threads 1 --verbosity 2 --sample-fraction .05
+Loading data with lazy sample...
+sample_fraction=0.050, api=native, target=activity
+training_threads=15 (reserving 1)
+sampled_rows=459,317, features=36, classes=41
+[0]     train-mlogloss:3.02808+0.00061  train-macro_f1:0.00592+0.00001  test-mlogloss:3.02946+0.00145   test-macro_f1:0.00592+0.00003
+[100]   train-mlogloss:1.32498+0.00037  train-macro_f1:0.51000+0.00126  test-mlogloss:1.35338+0.00103   test-macro_f1:0.48810+0.00284
+[200]   train-mlogloss:1.05118+0.00062  train-macro_f1:0.55486+0.00147  test-mlogloss:1.09110+0.00133   test-macro_f1:0.52691+0.00405
+[300]   train-mlogloss:0.94636+0.00053  train-macro_f1:0.58738+0.00245  test-mlogloss:0.99479+0.00163   test-macro_f1:0.54886+0.00409
+[400]   train-mlogloss:0.88557+0.00020  train-macro_f1:0.61507+0.00460  test-mlogloss:0.94187+0.00199   test-macro_f1:0.57015+0.00556
+^Z
+zsh: suspended  python scripts/train_final.py --api native --reserve-threads 1 --verbosity 2
+
+╭╴ treyt via  master at …/uv-final-project took  1h26m57s via   3.13.12 (uv-final-project) ───────────────────────────────────────────────────────── using zsh
+╰─❮
+
+╭╴ treyt via  master at …/uv-final-project via   3.13.12 (uv-final-project) ──────────────────────────────────────────────────────────────────────── using zsh
+╰─󰍟 fg
+[1]  + continued  python scripts/train_final.py --api native --reserve-threads 1 --verbosity 2
+[500]   train-mlogloss:0.83953+0.00027  train-macro_f1:0.64525+0.00872  test-mlogloss:0.90429+0.00207   test-macro_f1:0.58463+0.00599

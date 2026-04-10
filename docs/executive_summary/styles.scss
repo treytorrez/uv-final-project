@@ -1,0 +1,106 @@
+/* Dark, professional theme tweaks for the executive summary site.
+   Bootswatch "darkly" provides the base; this file dials it in. */
+
+:root {
+  --es-bg: #0b0f14;
+  --es-panel: #0f1722;
+  --es-text: #e6edf3;
+  --es-muted: #a8b3bf;
+  --es-accent: #4cc2ff;
+  --es-accent-2: #7cddb8;
+  --es-border: rgba(255, 255, 255, 0.10);
+}
+
+body {
+  background: radial-gradient(1200px 600px at 20% -10%, rgba(76, 194, 255, 0.18), transparent 50%),
+              radial-gradient(900px 500px at 80% 0%, rgba(124, 221, 184, 0.12), transparent 55%),
+              var(--es-bg);
+  color: var(--es-text);
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif;
+}
+
+a {
+  color: var(--es-accent);
+}
+
+.navbar {
+  border-bottom: 1px solid var(--es-border);
+  backdrop-filter: blur(10px);
+}
+
+/* Constrain content width a bit for readability. */
+.content {
+  max-width: 1080px;
+}
+
+.callout {
+  border: 1px solid var(--es-border);
+  background: rgba(15, 23, 34, 0.75);
+}
+
+.callout-title-container {
+  letter-spacing: 0.02em;
+}
+
+/* Simple metric cards */
+.es-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin: 18px 0 10px;
+}
+
+@media (max-width: 900px) {
+  .es-metrics {
+    grid-template-columns: 1fr;
+  }
+}
+
+.es-card {
+  border: 1px solid var(--es-border);
+  background: linear-gradient(180deg, rgba(15, 23, 34, 0.85), rgba(15, 23, 34, 0.55));
+  border-radius: 14px;
+  padding: 14px 14px 12px;
+}
+
+.es-card .kicker {
+  color: var(--es-muted);
+  font-size: 0.85rem;
+  margin-bottom: 6px;
+}
+
+.es-card .value {
+  font-size: 1.6rem;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.es-card .note {
+  color: var(--es-muted);
+  font-size: 0.9rem;
+  margin-top: 6px;
+}
+
+/* Headings: a touch more contrast and spacing */
+h1, h2, h3 {
+  letter-spacing: -0.01em;
+}
+
+h2 {
+  margin-top: 2.0rem;
+  border-bottom: 1px solid var(--es-border);
+  padding-bottom: 0.35rem;
+}
+
+/* Tables: softer borders */
+table {
+  border-color: var(--es-border) !important;
+}
+
+thead th {
+  border-bottom: 1px solid var(--es-border) !important;
+}
+
+tbody td {
+  border-top: 1px solid rgba(255, 255, 255, 0.06) !important;
+}

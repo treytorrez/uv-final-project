@@ -1,0 +1,30 @@
+project:
+  type: website
+  output-dir: _site
+
+website:
+  title: "CASAS HAR: Executive Summary"
+  navbar:
+    background: "#0b0f14"
+    foreground: "#e6edf3"
+    left:
+      - text: "Summary"
+        href: index.qmd
+
+format:
+  html:
+    theme:
+      - darkly
+      - styles.scss
+    toc: true
+    toc-location: left
+    page-layout: full
+    smooth-scroll: true
+    link-external-newwindow: true
+    code-copy: true
+    code-tools: false
+
+execute:
+  echo: false
+  warning: false
+  message: false

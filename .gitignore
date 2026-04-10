@@ -1,0 +1,29 @@
+# Data (too large for GitHub)
+data/
+
+# Python
+__pycache__/
+*.py[cod]
+
+# Virtual environments
+.venv/
+venv/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Tooling caches
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+
+# Editors / local config
+.vscode/
+.idea/
+.codex
+
+# OS
+.DS_Store
+
+# Generated artifacts you probably don't want to publish
+models/*nan*

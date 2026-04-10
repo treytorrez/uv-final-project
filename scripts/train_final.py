@@ -9,7 +9,7 @@ This script is designed for constrained local machines:
   1) scikit-learn wrapper (`xgboost.XGBClassifier`)
   2) native XGBoost learning API (`xgboost.train`)
 - Tunes hyperparameters efficiently in both branches.
-- Uses 5-fold stratified CV and macro-F1 as the primary model metric.
+- Uses 5-fold K-Fold CV and macro-F1 as the primary model metric.
 """
 
 from __future__ import annotations
@@ -25,8 +25,8 @@ from typing import Any
 import numpy as np
 import polars as pl
 import xgboost as xgb
-from sklearn.metrics import accuracy_score, f1_score, make_scorer
-from sklearn.model_selection import RandomizedSearchCV, StratifiedKFold
+from sklearn.metrics import accuracy_score, f1_score
+from sklearn.model_selection import KFold, ParameterSampler
 from sklearn.preprocessing import LabelEncoder
 
 # Sampling default requested by user.
@@ -105,8 +105,10 @@ def load_sampled_dataset(sample_fraction: float, seed: int) -> pl.DataFrame:
 
     sampled_frames: list[pl.DataFrame] = []
     for idx, file_path in enumerate(data_files):
+        home_id = file_path.parent.name
         home_df = (
             pl.scan_csv(str(file_path))
+            .with_columns(pl.lit(home_id).alias("home_id"))
             .with_columns(
                 # r1./r2. cleanup from exploratory notebook.
                 pl.col("activity").str.replace(r"^r[12]\.", "").alias("activity")
@@ -129,9 +131,11 @@ def load_sampled_dataset(sample_fraction: float, seed: int) -> pl.DataFrame:
     return pl.concat(sampled_frames, how="vertical")
 
 
-def select_features(df: pl.DataFrame, target_column: str) -> tuple[np.ndarray, np.ndarray, list[str], LabelEncoder]:
-    """Build numeric feature matrix X and encoded target y."""
-    excluded = {"activity", "activity_general"}
+def select_features(
+    df: pl.DataFrame, target_column: str
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, list[str], LabelEncoder]:
+    """Build numeric feature matrix X, raw target labels, and encoded target labels."""
+    excluded = {"activity", "activity_general", "home_id"}
     feature_columns = [
         col
         for col in df.columns
@@ -145,8 +149,23 @@ def select_features(df: pl.DataFrame, target_column: str) -> tuple[np.ndarray, n
     y_raw = df.get_column(target_column).to_numpy()
 
     encoder = LabelEncoder()
-    y = encoder.fit_transform(y_raw)
-    return X, y, feature_columns, encoder
+    y_encoded = encoder.fit_transform(y_raw)
+    return X, y_raw, y_encoded, feature_columns, encoder
+
+
+class LabelMappedXGBClassifier:
+    """XGBClassifier wrapper that returns original labels on predict()."""
+
+    def __init__(self, model: xgb.XGBClassifier, classes_: np.ndarray) -> None:
+        self.model = model
+        self.classes_ = np.array(classes_)
+
+    def predict(self, X: np.ndarray) -> np.ndarray:
+        pred_int = self.model.predict(X).astype(int)
+        return self.classes_[pred_int]
+
+    def predict_proba(self, X: np.ndarray) -> np.ndarray:
+        return self.model.predict_proba(X)
 
 
 def train_sklearn_api(
@@ -157,28 +176,16 @@ def train_sklearn_api(
     seed: int,
     train_threads: int,
     verbosity: int,
-) -> tuple[xgb.XGBClassifier, float, dict[str, Any]]:
-    """Train/tune with XGBClassifier + RandomizedSearchCV."""
-    cv = StratifiedKFold(n_splits=n_folds, shuffle=True, random_state=seed)
-    scorer = make_scorer(f1_score, average="macro")
+    class_labels: np.ndarray,
+) -> tuple[LabelMappedXGBClassifier, float, dict[str, Any]]:
+    """Train/tune with K-Fold + manual random search using XGBClassifier.
 
-    base = xgb.XGBClassifier(
-        objective="multi:softprob",
-        tree_method="hist",
-        learning_rate=DEFAULT_LEARNING_RATE,
-        max_depth=DEFAULT_MAX_DEPTH,
-        n_estimators=800,
-        subsample=0.85,
-        colsample_bytree=0.85,
-        reg_alpha=0.0,
-        reg_lambda=1.0,
-        random_state=seed,
-        n_jobs=train_threads,
-        verbosity=verbosity,
-        eval_metric="mlogloss",
-    )
+    XGBoost's sklearn wrapper requires fold-local contiguous class ids. With
+    plain K-Fold, some classes can be absent in a training fold, so we remap
+    y_train labels per fold before fitting.
+    """
+    cv = KFold(n_splits=n_folds, shuffle=True, random_state=seed)
 
-    # Efficient search space for local training.
     param_distributions: dict[str, list[Any]] = {
         "learning_rate": [0.02, 0.03, 0.05, 0.07],
         "max_depth": [4, 5, 6],
@@ -189,37 +196,116 @@ def train_sklearn_api(
         "reg_lambda": [0.8, 1.0, 1.2],
         "n_estimators": [300, 500, 800],
     }
-
-    # Keep search itself single-process; model threads are already parallelized.
-    search = RandomizedSearchCV(
-        estimator=base,
-        param_distributions=param_distributions,
-        n_iter=n_trials,
-        scoring=scorer,
-        cv=cv,
-        refit=True,
-        random_state=seed,
-        verbose=3,  # High verbosity requested.
-        n_jobs=1,
+    candidates = list(
+        ParameterSampler(param_distributions=param_distributions, n_iter=n_trials, random_state=seed)
     )
-    search.fit(X, y)
-    best_model = search.best_estimator_
-    best_cv_f1_macro = float(search.best_score_)
+
+    best_score = -1.0
+    best_params: dict[str, Any] = {}
+    all_trial_scores: list[dict[str, Any]] = []
+
+    for trial_idx, params in enumerate(candidates, start=1):
+        fold_scores: list[float] = []
+        print(f"[sklearn-search] trial={trial_idx:02d}/{len(candidates)} params={params}")
+
+        for fold_idx, (train_idx, val_idx) in enumerate(cv.split(X), start=1):
+            y_train_raw = y[train_idx]
+            y_val_raw = y[val_idx]
+
+            train_classes = np.unique(y_train_raw)
+            train_class_to_int = {label: i for i, label in enumerate(train_classes)}
+            y_train_fold = np.array(
+                [train_class_to_int[label] for label in y_train_raw], dtype=np.int32
+            )
+
+            model = xgb.XGBClassifier(
+                objective="multi:softprob",
+                num_class=len(train_classes),
+                tree_method="hist",
+                eval_metric="mlogloss",
+                random_state=seed + trial_idx + fold_idx,
+                n_jobs=train_threads,
+                verbosity=verbosity,
+                **params,
+            )
+            model.fit(X[train_idx], y_train_fold, verbose=False)
+
+            pred_int = model.predict(X[val_idx]).astype(int)
+            pred_raw = train_classes[pred_int]
+            fold_score = float(
+                f1_score(
+                    y_val_raw,
+                    pred_raw,
+                    average="macro",
+                    labels=class_labels.tolist(),
+                    zero_division=0,
+                )
+            )
+            fold_scores.append(fold_score)
+            print(
+                f"[sklearn-search] trial={trial_idx:02d} fold={fold_idx}/{n_folds} "
+                f"macro_f1={fold_score:.5f}"
+            )
+
+        trial_score = float(np.mean(fold_scores))
+        all_trial_scores.append(
+            {
+                "trial": trial_idx,
+                "cv_macro_f1_mean": trial_score,
+                "params": params,
+            }
+        )
+        print(
+            f"[sklearn-search] trial={trial_idx:02d} "
+            f"macro_f1_mean={trial_score:.5f}"
+        )
+
+        if trial_score > best_score:
+            best_score = trial_score
+            best_params = params
+
+    if not best_params:
+        msg = "No valid sklearn parameter set was found during search."
+        raise RuntimeError(msg)
+
+    # Refit on full data with stable global class mapping.
+    global_classes = np.array(class_labels)
+    global_class_to_int = {label: i for i, label in enumerate(global_classes)}
+    y_full = np.array([global_class_to_int[label] for label in y], dtype=np.int32)
+
+    final_model = xgb.XGBClassifier(
+        objective="multi:softprob",
+        num_class=len(global_classes),
+        tree_method="hist",
+        eval_metric="mlogloss",
+        random_state=seed,
+        n_jobs=train_threads,
+        verbosity=verbosity,
+        **best_params,
+    )
+    final_model.fit(X, y_full, verbose=False)
 
     details = {
-        "best_params": search.best_params_,
-        "best_cv_f1_macro": best_cv_f1_macro,
+        "best_params": best_params,
+        "best_cv_f1_macro": best_score,
+        "trial_scores": all_trial_scores,
     }
-    return best_model, best_cv_f1_macro, details
+    return LabelMappedXGBClassifier(model=final_model, classes_=global_classes), best_score, details
 
 
 def macro_f1_eval(preds: np.ndarray, dtrain: xgb.DMatrix) -> tuple[str, float]:
     """Custom metric for native XGBoost CV: macro-F1 from class probabilities."""
-    labels = dtrain.get_label().astype(int)
-    n_classes = int(labels.max()) + 1
+    y_true = dtrain.get_label().astype(int)
+    n_classes = int(preds.size / max(1, y_true.shape[0]))
     proba = preds.reshape(-1, n_classes)
     pred_labels = np.argmax(proba, axis=1)
-    score = f1_score(labels, pred_labels, average="macro")
+    score = f1_score(
+        y_true,
+        pred_labels,
+        average="macro",
+        labels=list(range(n_classes)),
+        zero_division=0,
+    )
     return "macro_f1", float(score)
 
 
@@ -236,6 +322,7 @@ def train_native_api(
     dtrain = xgb.DMatrix(X, label=y)
     n_classes = int(np.max(y)) + 1
     rng = np.random.default_rng(seed)
+    folds = list(KFold(n_splits=n_folds, shuffle=True, random_state=seed).split(X, y))
 
     best_score = -1.0
     best_params: dict[str, Any] = {}
@@ -263,8 +350,7 @@ def train_native_api(
             params=params,
             dtrain=dtrain,
             num_boost_round=800,
-            nfold=n_folds,
-            stratified=True,
+            folds=folds,
             metrics=("mlogloss",),
             custom_metric=macro_f1_eval,
             maximize=True,
@@ -304,7 +390,7 @@ def train_native_api(
 
 
 def compute_train_metrics(
-    model: xgb.XGBClassifier | xgb.Booster,
+    model: xgb.XGBClassifier | LabelMappedXGBClassifier | xgb.Booster,
     X: np.ndarray,
     y: np.ndarray,
 ) -> dict[str, float]:
@@ -323,7 +409,7 @@ def compute_train_metrics(
 
 
 def save_outputs(
-    model: xgb.XGBClassifier | xgb.Booster,
+    model: xgb.XGBClassifier | LabelMappedXGBClassifier | xgb.Booster,
     details: dict[str, Any],
     metric_value: float,
     metric_name: str,
@@ -401,7 +487,7 @@ def parse_args() -> argparse.Namespace:
         "--n-folds",
         type=int,
         default=DEFAULT_N_FOLDS,
-        help=f"Stratified CV folds (default: {DEFAULT_N_FOLDS}).",
+        help=f"K-Fold CV folds (default: {DEFAULT_N_FOLDS}).",
     )
     parser.add_argument(
         "--n-trials",
@@ -449,7 +535,9 @@ def main() -> None:
     print(f"training_threads={train_threads} (reserving {args.reserve_threads})")
 
     df = load_sampled_dataset(sample_fraction=args.sample_fraction, seed=args.seed)
-    X, y, feature_columns, encoder = select_features(df=df, target_column=args.target_column)
+    X, y_raw, y_encoded, feature_columns, encoder = select_features(
+        df=df, target_column=args.target_column
+    )
     print(f"sampled_rows={df.height:,}, features={len(feature_columns)}, classes={len(encoder.classes_)}")
 
     # Primary metric choice:
@@ -460,7 +548,7 @@ def main() -> None:
     if args.api == "native":
         model, best_cv_metric, details = train_native_api(
             X=X,
-            y=y,
+            y=y_encoded,
             n_folds=args.n_folds,
             n_trials=args.n_trials,
             seed=args.seed,
@@ -470,15 +558,17 @@ def main() -> None:
     else:
         model, best_cv_metric, details = train_sklearn_api(
             X=X,
-            y=y,
+            y=y_raw,
             n_folds=args.n_folds,
             n_trials=args.n_trials,
             seed=args.seed,
             train_threads=train_threads,
             verbosity=args.verbosity,
+            class_labels=encoder.classes_,
         )
 
-    train_metrics = compute_train_metrics(model=model, X=X, y=y)
+    y_for_metrics: np.ndarray = y_encoded if args.api == "native" else y_raw
+    train_metrics = compute_train_metrics(model=model, X=X, y=y_for_metrics)
     model_path, meta_path = save_outputs(
         model=model,
         details=details,

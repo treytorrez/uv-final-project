@@ -1,0 +1,113 @@
+---
+title: "Human Activity Recognition (CASAS) Executive Summary"
+subtitle: "Ambient sensor windows → activity predictions (XGBoost baseline)"
+date: last-modified
+date-format: "MMMM D, YYYY"
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    number-sections: false
+    page-layout: full
+---
+
+::: {.callout-important}
+This is a mock-up executive summary. It is meant to be readable and professional first, and fully sourced/complete second. We can tighten claims and swap in final metrics once you decide which target and evaluation protocol you want to report.
+:::
+
+<div class="es-metrics">
+  <div class="es-card">
+    <div class="kicker">Targets considered</div>
+    <div class="value">41 specific / 11 generalized</div>
+    <div class="note">Generalized labels reduce sparsity and imbalance.</div>
+  </div>
+  <div class="es-card">
+    <div class="kicker">Best quick baseline (macro-F1)</div>
+    <div class="value">0.720</div>
+    <div class="note">For <code>activity_general</code> (row-level CV).</div>
+  </div>
+  <div class="es-card">
+    <div class="kicker">Dataset</div>
+    <div class="value">30 homes</div>
+    <div class="note">Each row is a sliding window of 30 sensor events.</div>
+  </div>
+</div>
+
+## Executive Summary
+
+This project builds a multiclass classifier to recognize daily activities in smart homes from ambient sensor streams (motion, doors, light, etc.). Each training instance is a **feature vector computed over a sliding window of 30 sensor events**, and the model predicts either a fine-grained activity label (41-class) or a generalized activity category (11-class).
+
+The clearest takeaway from early results is that **generalized labels are substantially more learnable and more stable**, improving macro-F1, weighted-F1, and accuracy in a quick baseline comparison. If the goal is dependable activity recognition rather than strict sub-activity identification, the generalized target is the right default.
+
+## Problem & Goal
+
+**Problem:** Given a feature vector summarizing the most recent sensor activity in a home, predict what activity is occurring.
+
+**Goal:** Produce a model that is accurate enough for downstream use (monitoring, summarization, alerting, or analytics) and robust enough to run under local compute constraints.
+
+## Data & Labels
+
+- Source: CASAS smart home ambient sensor dataset (homes `csh101`–`csh130`).
+- Instances: sliding window of 30 sensor events, summarized into numeric features.
+- Features: 36 numeric features per row (plus label columns).
+- Labels:
+  - `activity`: specific activities (41 classes in current pipeline).
+  - `activity_general`: 11 generalized categories (Hygiene, Leisure, Meal_Prep, etc.).
+
+::: {.callout-note}
+Generalization is performed by mapping multiple specific labels into a smaller set (e.g., `Cook_Breakfast`, `Cook_Lunch`, `Cook_Dinner` → `Meal_Prep`).
+:::
+
+## Modeling Approach
+
+### Baseline Model
+
+We use **XGBoost (gradient boosted decision trees)** because it:
+- handles heterogeneous numeric features well without normalization,
+- scales to large tabular datasets efficiently (`tree_method="hist"`),
+- supports multiclass probabilities (needed for log loss and calibration).
+
+### Primary Metric
+
+For reporting, we focus on **macro-F1** because the class distribution is imbalanced and we want each class to matter. We treat accuracy and weighted-F1 as secondary diagnostics.
+
+## Key Results (Quick Baseline)
+
+The table below compares a lightweight baseline evaluation for the two target choices:
+
+| target | n_classes | cv_f1_macro_mean | cv_f1_macro_std | cv_f1_weighted_mean | cv_accuracy_mean |
+|---|---:|---:|---:|---:|---:|
+| activity_general | 11 | 0.7198 | 0.0156 | 0.7838 | 0.7921 |
+| activity | 41 | 0.6566 | 0.0021 | 0.6990 | 0.7083 |
+
+**Interpretation:** Generalized labels improve macro-F1, weighted-F1, and accuracy. This supports training on `activity_general` as the main target if reliability is the priority.
+
+::: {.callout-warning}
+This baseline uses row-level cross validation, which may overestimate true generalization because the data is created from overlapping sliding windows. A more defensible “unseen home” score would use a grouped split by `home_id`.
+:::
+
+## Risks, Limitations, and What Would Make It Better
+
+- **Leakage risk:** adjacent windows are highly correlated; random row splits inflate metrics.
+- **Cross-home generalization:** models can learn home-specific patterns; holding out homes is a stronger test.
+- **Extreme class imbalance:** some specific labels are extremely rare; evaluation variance can be misleading.
+- **Interpretability:** boosted trees are interpretable at the feature level, but not causal; confusion matrices matter.
+
+Compensations we can make (and should, if this is a final report):
+- Switch evaluation to `GroupKFold` by `home_id` (or leave-one-home-out).
+- Report both macro-F1 and log loss, plus a confusion matrix for top activities.
+- Consider a two-stage model: generalized prediction first, then specific within a bucket.
+
+## Recommendation
+
+Default to training on **generalized labels** (`activity_general`). If sub-activities are still required, add a second-stage classifier trained only inside each generalized bucket; this keeps the primary model stable and reduces failure modes on rare fine-grained labels.
+
+## How To Render
+
+Quarto is not currently installed in this environment. Once installed, render the site from repo root:
+
+```bash
+quarto render docs/executive_summary
+```
+
+This produces `docs/executive_summary/_site/index.html`.
