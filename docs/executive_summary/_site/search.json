@@ -1,0 +1,65 @@
+[
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "Human Activity Recognition (CASAS) Executive Summary",
+    "section": "",
+    "text": "Important\n\n\n\nThis is a mock-up executive summary. It is meant to be readable and professional first, and fully sourced/complete second. We can tighten claims and swap in final metrics once you decide which target and evaluation protocol you want to report."
+  },
+  {
+    "objectID": "index.html#executive-summary",
+    "href": "index.html#executive-summary",
+    "title": "Human Activity Recognition (CASAS) Executive Summary",
+    "section": "Executive Summary",
+    "text": "Executive Summary\nThis project builds a multiclass classifier to recognize daily activities in smart homes from ambient sensor streams (motion, doors, light, etc.). Each training instance is a feature vector computed over a sliding window of 30 sensor events, and the model predicts either a fine-grained activity label (41-class) or a generalized activity category (11-class).\nThe clearest takeaway from early results is that generalized labels are substantially more learnable and more stable, improving macro-F1, weighted-F1, and accuracy in a quick baseline comparison. If the goal is dependable activity recognition rather than strict sub-activity identification, the generalized target is the right default."
+  },
+  {
+    "objectID": "index.html#problem-goal",
+    "href": "index.html#problem-goal",
+    "title": "Human Activity Recognition (CASAS) Executive Summary",
+    "section": "Problem & Goal",
+    "text": "Problem & Goal\nProblem: Given a feature vector summarizing the most recent sensor activity in a home, predict what activity is occurring.\nGoal: Produce a model that is accurate enough for downstream use (monitoring, summarization, alerting, or analytics) and robust enough to run under local compute constraints."
+  },
+  {
+    "objectID": "index.html#data-labels",
+    "href": "index.html#data-labels",
+    "title": "Human Activity Recognition (CASAS) Executive Summary",
+    "section": "Data & Labels",
+    "text": "Data & Labels\n\nSource: CASAS smart home ambient sensor dataset (homes csh101–csh130).\nInstances: sliding window of 30 sensor events, summarized into numeric features.\nFeatures: 36 numeric features per row (plus label columns).\nLabels:\n\nactivity: specific activities (41 classes in current pipeline).\nactivity_general: 11 generalized categories (Hygiene, Leisure, Meal_Prep, etc.).\n\n\n\n\n\n\n\n\nNote\n\n\n\nGeneralization is performed by mapping multiple specific labels into a smaller set (e.g., Cook_Breakfast, Cook_Lunch, Cook_Dinner → Meal_Prep)."
+  },
+  {
+    "objectID": "index.html#modeling-approach",
+    "href": "index.html#modeling-approach",
+    "title": "Human Activity Recognition (CASAS) Executive Summary",
+    "section": "Modeling Approach",
+    "text": "Modeling Approach\n\nBaseline Model\nWe use XGBoost (gradient boosted decision trees) because it: - handles heterogeneous numeric features well without normalization, - scales to large tabular datasets efficiently (tree_method=\"hist\"), - supports multiclass probabilities (needed for log loss and calibration).\n\n\nPrimary Metric\nFor reporting, we focus on macro-F1 because the class distribution is imbalanced and we want each class to matter. We treat accuracy and weighted-F1 as secondary diagnostics."
+  },
+  {
+    "objectID": "index.html#key-results-quick-baseline",
+    "href": "index.html#key-results-quick-baseline",
+    "title": "Human Activity Recognition (CASAS) Executive Summary",
+    "section": "Key Results (Quick Baseline)",
+    "text": "Key Results (Quick Baseline)\nThe table below compares a lightweight baseline evaluation for the two target choices:\n\n\n\n\n\n\n\n\n\n\n\ntarget\nn_classes\ncv_f1_macro_mean\ncv_f1_macro_std\ncv_f1_weighted_mean\ncv_accuracy_mean\n\n\n\n\nactivity_general\n11\n0.7198\n0.0156\n0.7838\n0.7921\n\n\nactivity\n41\n0.6566\n0.0021\n0.6990\n0.7083\n\n\n\nInterpretation: Generalized labels improve macro-F1, weighted-F1, and accuracy. This supports training on activity_general as the main target if reliability is the priority.\n\n\n\n\n\n\nWarning\n\n\n\nThis baseline uses row-level cross validation, which may overestimate true generalization because the data is created from overlapping sliding windows. A more defensible “unseen home” score would use a grouped split by home_id."
+  },
+  {
+    "objectID": "index.html#risks-limitations-and-what-would-make-it-better",
+    "href": "index.html#risks-limitations-and-what-would-make-it-better",
+    "title": "Human Activity Recognition (CASAS) Executive Summary",
+    "section": "Risks, Limitations, and What Would Make It Better",
+    "text": "Risks, Limitations, and What Would Make It Better\n\nLeakage risk: adjacent windows are highly correlated; random row splits inflate metrics.\nCross-home generalization: models can learn home-specific patterns; holding out homes is a stronger test.\nExtreme class imbalance: some specific labels are extremely rare; evaluation variance can be misleading.\nInterpretability: boosted trees are interpretable at the feature level, but not causal; confusion matrices matter.\n\nCompensations we can make (and should, if this is a final report): - Switch evaluation to GroupKFold by home_id (or leave-one-home-out). - Report both macro-F1 and log loss, plus a confusion matrix for top activities. - Consider a two-stage model: generalized prediction first, then specific within a bucket."
+  },
+  {
+    "objectID": "index.html#recommendation",
+    "href": "index.html#recommendation",
+    "title": "Human Activity Recognition (CASAS) Executive Summary",
+    "section": "Recommendation",
+    "text": "Recommendation\nDefault to training on generalized labels (activity_general). If sub-activities are still required, add a second-stage classifier trained only inside each generalized bucket; this keeps the primary model stable and reduces failure modes on rare fine-grained labels."
+  },
+  {
+    "objectID": "index.html#how-to-render",
+    "href": "index.html#how-to-render",
+    "title": "Human Activity Recognition (CASAS) Executive Summary",
+    "section": "How To Render",
+    "text": "How To Render\nQuarto is not currently installed in this environment. Once installed, render the site from repo root:\nquarto render docs/executive_summary\nThis produces docs/executive_summary/_site/index.html."
+  }
+]
