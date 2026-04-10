@@ -151,6 +151,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <ul class="collapse">
   <li><a href="#baseline-model" id="toc-baseline-model" class="nav-link" data-scroll-target="#baseline-model">Baseline Model</a></li>
   <li><a href="#primary-metric" id="toc-primary-metric" class="nav-link" data-scroll-target="#primary-metric">Primary Metric</a></li>
+  <li><a href="#class-distribution" id="toc-class-distribution" class="nav-link" data-scroll-target="#class-distribution">Class Distribution</a></li>
   </ul></li>
   <li><a href="#implementation-selected-code" id="toc-implementation-selected-code" class="nav-link" data-scroll-target="#implementation-selected-code">Implementation (Selected Code)</a>
   <ul class="collapse">
@@ -270,6 +271,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="primary-metric" class="level3">
 <h3 class="anchored" data-anchor-id="primary-metric">Primary Metric</h3>
 <p>The primary metric is <strong>macro-F1</strong> because the class distribution is imbalanced and each class should contribute equally. Accuracy and weighted-F1 are treated as secondary diagnostics.</p>
+</section>
+<section id="class-distribution" class="level3">
+<h3 class="anchored" data-anchor-id="class-distribution">Class Distribution</h3>
+<p>The following figures show label frequency (log scale) across all homes after label cleanup and filtering.</p>
+<p><img src="assets/label_distribution_generalized.png" class="img-fluid" alt="Generalized label distribution (log scale)"></p>
+<p><img src="assets/label_distribution_specific.png" class="img-fluid" alt="Specific label distribution (log scale)"></p>
 </section>
 </section>
 <section id="implementation-selected-code" class="level2">
@@ -430,6 +437,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <ul>
 <li><strong>Leakage risk:</strong> adjacent windows are highly correlated; random row splits inflate metrics.</li>
 <li><strong>Cross-home generalization:</strong> models can learn home-specific patterns; holding out homes is a stronger test.</li>
+<li><strong>Compute constraints (memory):</strong> end-to-end training and cross-validation on the full dataset can exceed available RAM; experiments therefore rely on per-home sampling and limited hyperparameter searches.</li>
 <li><strong>Extreme class imbalance:</strong> some specific labels are extremely rare; evaluation variance can be misleading.</li>
 <li><strong>Interpretability:</strong> boosted trees are interpretable at the feature level, but not causal; confusion matrices matter.</li>
 </ul>

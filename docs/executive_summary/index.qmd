@@ -86,6 +86,14 @@ This work uses **XGBoost (gradient boosted decision trees)** because it:
 
 The primary metric is **macro-F1** because the class distribution is imbalanced and each class should contribute equally. Accuracy and weighted-F1 are treated as secondary diagnostics.
 
+### Class Distribution
+
+The following figures show label frequency (log scale) across all homes after label cleanup and filtering.
+
+![](assets/label_distribution_generalized.png){fig-alt="Generalized label distribution (log scale)"}
+
+![](assets/label_distribution_specific.png){fig-alt="Specific label distribution (log scale)"}
+
 ## Implementation (Selected Code)
 
 These are short excerpts from the training pipeline (`scripts/train_final.py`).
@@ -142,6 +150,7 @@ The table below is auto-generated from the saved run metadata in `models/meta_*.
 
 - **Leakage risk:** adjacent windows are highly correlated; random row splits inflate metrics.
 - **Cross-home generalization:** models can learn home-specific patterns; holding out homes is a stronger test.
+- **Compute constraints (memory):** end-to-end training and cross-validation on the full dataset can exceed available RAM; experiments therefore rely on per-home sampling and limited hyperparameter searches.
 - **Extreme class imbalance:** some specific labels are extremely rare; evaluation variance can be misleading.
 - **Interpretability:** boosted trees are interpretable at the feature level, but not causal; confusion matrices matter.
 
