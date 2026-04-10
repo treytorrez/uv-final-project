@@ -162,6 +162,7 @@ The table below is auto-generated from the saved run metadata in `models/meta_*.
 - **Interpretability:** boosted trees are interpretable at the feature level, but not causal; confusion matrices matter.
 
 Opportunities for improvement:
+
 - Switch evaluation to `GroupKFold` by `home_id` (or leave-one-home-out).
 - Report both macro-F1 and log loss, plus a confusion matrix for top activities.
 - Consider a two-stage model: generalized prediction first, then specific within a bucket.
@@ -169,6 +170,7 @@ Opportunities for improvement:
 ## Future Improvements
 
 Future work focuses on strengthening generalization and interpretability:
+
 - Evaluate with an “unseen home” protocol (grouped by `home_id`) to avoid optimistic scores from correlated sliding windows.
 - Add confusion matrices and per-class support to make failure modes clear to non-technical stakeholders.
 - Consider a two-stage approach: predict generalized categories first, then predict fine-grained activities within each category.

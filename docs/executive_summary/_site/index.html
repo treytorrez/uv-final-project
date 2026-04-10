@@ -6,7 +6,7 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
-<meta name="dcterms.date" content="2026-04-09">
+<meta name="dcterms.date" content="2026-04-10">
 
 <title>Human Activity Recognition (CASAS) Executive Summary – CASAS HAR: Executive Summary</title>
 <style>
@@ -194,7 +194,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">April 9, 2026</p>
+      <p class="date">April 10, 2026</p>
     </div>
   </div>
   
@@ -445,11 +445,21 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <li><strong>Extreme class imbalance:</strong> some specific labels are extremely rare; evaluation variance can be misleading.</li>
 <li><strong>Interpretability:</strong> boosted trees are interpretable at the feature level, but not causal; confusion matrices matter.</li>
 </ul>
-<p>Opportunities for improvement: - Switch evaluation to <code>GroupKFold</code> by <code>home_id</code> (or leave-one-home-out). - Report both macro-F1 and log loss, plus a confusion matrix for top activities. - Consider a two-stage model: generalized prediction first, then specific within a bucket.</p>
+<p>Opportunities for improvement:</p>
+<ul>
+<li>Switch evaluation to <code>GroupKFold</code> by <code>home_id</code> (or leave-one-home-out).</li>
+<li>Report both macro-F1 and log loss, plus a confusion matrix for top activities.</li>
+<li>Consider a two-stage model: generalized prediction first, then specific within a bucket.</li>
+</ul>
 </section>
 <section id="future-improvements" class="level2">
 <h2 class="anchored" data-anchor-id="future-improvements">Future Improvements</h2>
-<p>Future work focuses on strengthening generalization and interpretability: - Evaluate with an “unseen home” protocol (grouped by <code>home_id</code>) to avoid optimistic scores from correlated sliding windows. - Add confusion matrices and per-class support to make failure modes clear to non-technical stakeholders. - Consider a two-stage approach: predict generalized categories first, then predict fine-grained activities within each category.</p>
+<p>Future work focuses on strengthening generalization and interpretability:</p>
+<ul>
+<li>Evaluate with an “unseen home” protocol (grouped by <code>home_id</code>) to avoid optimistic scores from correlated sliding windows.</li>
+<li>Add confusion matrices and per-class support to make failure modes clear to non-technical stakeholders.</li>
+<li>Consider a two-stage approach: predict generalized categories first, then predict fine-grained activities within each category.</li>
+</ul>
 
 
 </section>
