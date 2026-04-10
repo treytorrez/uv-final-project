@@ -9,7 +9,7 @@ This script is designed for constrained local machines:
   1) scikit-learn wrapper (`xgboost.XGBClassifier`)
   2) native XGBoost learning API (`xgboost.train`)
 - Tunes hyperparameters efficiently in both branches.
-- Uses 5-fold K-Fold CV and macro-F1 as the primary model metric.
+- Uses GroupKFold by `home_id` (no home leakage) and macro-F1 as the primary model metric.
 """
 
 from __future__ import annotations
@@ -18,6 +18,7 @@ import argparse
 import json
 import os
 import pickle
+import tempfile
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -26,7 +27,7 @@ import numpy as np
 import polars as pl
 import xgboost as xgb
 from sklearn.metrics import accuracy_score, f1_score
-from sklearn.model_selection import KFold, ParameterSampler
+from sklearn.model_selection import GroupKFold, ParameterSampler
 from sklearn.preprocessing import LabelEncoder
 
 # Sampling default requested by user.
@@ -43,6 +44,7 @@ DEFAULT_EARLY_STOPPING_ROUNDS: int = 40
 
 DATA_GLOB: str = "data/raw/csh*/csh*.ann.features.csv"
 MODELS_DIR: Path = Path("models")
+DEFAULT_CHECKPOINT_DIR: Path = MODELS_DIR / "checkpoints"
 
 GENERAL_ACTIVITY_MAP: dict[str, str] = {
     "Bathe": "Hygiene",
@@ -93,6 +95,15 @@ def compute_training_threads(reserve_threads: int = DEFAULT_RESERVE_THREADS) -> 
     """Return the number of threads for training while leaving some cores free."""
     cpu_total = os.cpu_count() or 8
     return max(1, cpu_total - reserve_threads)
+
+
+def atomic_write_json(path: Path, data: dict[str, Any]) -> None:
+    """Write JSON atomically to avoid partially-written checkpoints."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with tempfile.NamedTemporaryFile("w", delete=False, dir=str(path.parent)) as tf:
+        tmp_path = Path(tf.name)
+        tf.write(json.dumps(data, indent=2))
+    tmp_path.replace(path)
 
 
 def load_sampled_dataset(sample_fraction: float, seed: int) -> pl.DataFrame:
@@ -174,6 +185,7 @@ class LabelMappedXGBClassifier:
 def train_sklearn_api(
     X: np.ndarray,
     y: np.ndarray,
+    groups: np.ndarray,
     n_folds: int,
     n_trials: int,
     seed: int,
@@ -187,7 +199,7 @@ def train_sklearn_api(
     plain K-Fold, some classes can be absent in a training fold, so we remap
     y_train labels per fold before fitting.
     """
-    cv = KFold(n_splits=n_folds, shuffle=True, random_state=seed)
+    cv = GroupKFold(n_splits=n_folds)
 
     param_distributions: dict[str, list[Any]] = {
         "learning_rate": [0.02, 0.03, 0.05, 0.07],
@@ -211,7 +223,7 @@ def train_sklearn_api(
         fold_scores: list[float] = []
         print(f"[sklearn-search] trial={trial_idx:02d}/{len(candidates)} params={params}")
 
-        for fold_idx, (train_idx, val_idx) in enumerate(cv.split(X), start=1):
+        for fold_idx, (train_idx, val_idx) in enumerate(cv.split(X, y, groups), start=1):
             y_train_raw = y[train_idx]
             y_val_raw = y[val_idx]
 
@@ -240,7 +252,6 @@ def train_sklearn_api(
                     y_val_raw,
                     pred_raw,
                     average="macro",
-                    labels=class_labels.tolist(),
                     zero_division=0,
                 )
             )
@@ -306,7 +317,6 @@ def macro_f1_eval(preds: np.ndarray, dtrain: xgb.DMatrix) -> tuple[str, float]:
         y_true,
         pred_labels,
         average="macro",
-        labels=list(range(n_classes)),
         zero_division=0,
     )
     return "macro_f1", float(score)
@@ -315,6 +325,7 @@ def macro_f1_eval(preds: np.ndarray, dtrain: xgb.DMatrix) -> tuple[str, float]:
 def train_native_api(
     X: np.ndarray,
     y: np.ndarray,
+    groups: np.ndarray,
     n_folds: int,
     n_trials: int,
     seed: int,
@@ -324,16 +335,19 @@ def train_native_api(
     early_stopping_rounds: int = DEFAULT_EARLY_STOPPING_ROUNDS,
     learning_rate: float | None = None,
     force_final_rounds: bool = False,
+    checkpoint_path: Path | None = None,
 ) -> tuple[xgb.Booster, float, dict[str, Any]]:
     """Train/tune with native xgb.train and xgb.cv."""
     dtrain = xgb.DMatrix(X, label=y)
     n_classes = int(np.max(y)) + 1
     rng = np.random.default_rng(seed)
-    folds = list(KFold(n_splits=n_folds, shuffle=True, random_state=seed).split(X, y))
+    folds = list(GroupKFold(n_splits=n_folds).split(X, y, groups))
 
     best_score = -1.0
+    best_trial = 0
     best_params: dict[str, Any] = {}
     best_rounds = 0
+    trial_history: list[dict[str, Any]] = []
 
     for trial in range(1, n_trials + 1):
         params = {
@@ -373,8 +387,40 @@ def train_native_api(
         rounds = int(score_series.idxmax() + 1)
         print(f"[native-search] trial={trial:02d} macro_f1={score:.5f} rounds={rounds}")
 
-        if score > best_score:
+        is_new_best = score > best_score
+        trial_history.append(
+            {
+                "trial": trial,
+                "macro_f1": score,
+                "best_rounds": rounds,
+                "params": params,
+            }
+        )
+        if checkpoint_path is not None:
+            best_so_far = {
+                "trial": trial if is_new_best else best_trial,
+                "macro_f1": score if is_new_best else best_score,
+                "best_rounds": rounds if is_new_best else best_rounds,
+                "params": params if is_new_best else best_params,
+            }
+            atomic_write_json(
+                checkpoint_path,
+                {
+                    "api": "native",
+                    "n_folds": n_folds,
+                    "num_boost_round": num_boost_round,
+                    "early_stopping_rounds": early_stopping_rounds,
+                    "learning_rate_override": learning_rate,
+                    "force_final_rounds": force_final_rounds,
+                    "trials_completed": trial,
+                    "trial_history": trial_history,
+                    "best_so_far": best_so_far,
+                },
+            )
+
+        if is_new_best:
             best_score = score
+            best_trial = trial
             best_params = params
             best_rounds = rounds
 
@@ -400,6 +446,7 @@ def train_native_api(
         "learning_rate_override": learning_rate,
         "final_num_boost_round": final_rounds,
         "force_final_rounds": force_final_rounds,
+        "checkpoint_path": str(checkpoint_path) if checkpoint_path is not None else None,
     }
     return model, best_score, details
 
@@ -502,7 +549,7 @@ def parse_args() -> argparse.Namespace:
         "--n-folds",
         type=int,
         default=DEFAULT_N_FOLDS,
-        help=f"K-Fold CV folds (default: {DEFAULT_N_FOLDS}).",
+        help=f"GroupKFold folds by home_id (default: {DEFAULT_N_FOLDS}).",
     )
     parser.add_argument(
         "--n-trials",
@@ -532,6 +579,18 @@ def parse_args() -> argparse.Namespace:
         "--force-final-rounds",
         action="store_true",
         help="Native API: train final model with --num-boost-round (instead of CV-selected best).",
+    )
+    parser.add_argument(
+        "--checkpoint-dir",
+        type=Path,
+        default=DEFAULT_CHECKPOINT_DIR,
+        help="Directory to write native trial checkpoints (default: models/checkpoints).",
+    )
+    parser.add_argument(
+        "--run-id",
+        type=str,
+        default=None,
+        help="Optional run identifier used in checkpoint filenames (default: timestamp).",
     )
     parser.add_argument(
         "--seed",
@@ -572,10 +631,16 @@ def main() -> None:
     print(f"sample_fraction={args.sample_fraction:.3f}, api={args.api}, target={args.target_column}")
     print(f"training_threads={train_threads} (reserving {args.reserve_threads})")
 
+    run_id = args.run_id or datetime.now().strftime("%Y%m%d_%H%M%S")
     df = load_sampled_dataset(sample_fraction=args.sample_fraction, seed=args.seed)
     X, y_raw, y_encoded, feature_columns, encoder = select_features(
         df=df, target_column=args.target_column
     )
+    groups = df.get_column("home_id").to_numpy()
+    n_groups = len(np.unique(groups))
+    if args.n_folds > n_groups:
+        msg = f"--n-folds={args.n_folds} is > number of homes in data ({n_groups})."
+        raise ValueError(msg)
     print(f"sampled_rows={df.height:,}, features={len(feature_columns)}, classes={len(encoder.classes_)}")
 
     # Primary metric choice:
@@ -584,9 +649,12 @@ def main() -> None:
     metric_name = "f1_macro"
 
     if args.api == "native":
+        checkpoint_path = args.checkpoint_dir / f"checkpoint_native_{args.target_column}_{run_id}.json"
+        print(f"checkpoint_path={checkpoint_path}")
         model, best_cv_metric, details = train_native_api(
             X=X,
             y=y_encoded,
+            groups=groups,
             n_folds=args.n_folds,
             n_trials=args.n_trials,
             seed=args.seed,
@@ -596,11 +664,13 @@ def main() -> None:
             early_stopping_rounds=args.early_stopping_rounds,
             learning_rate=args.learning_rate,
             force_final_rounds=args.force_final_rounds,
+            checkpoint_path=checkpoint_path,
         )
     else:
         model, best_cv_metric, details = train_sklearn_api(
             X=X,
             y=y_raw,
+            groups=groups,
             n_folds=args.n_folds,
             n_trials=args.n_trials,
             seed=args.seed,
@@ -608,6 +678,14 @@ def main() -> None:
             verbosity=args.verbosity,
             class_labels=encoder.classes_,
         )
+
+    # Persist CV scheme context in saved metadata.
+    details = {
+        **details,
+        "cv_scheme": "GroupKFold(home_id)",
+        "n_folds": args.n_folds,
+        "n_homes": n_groups,
+    }
 
     y_for_metrics: np.ndarray = y_encoded if args.api == "native" else y_raw
     train_metrics = compute_train_metrics(model=model, X=X, y=y_for_metrics)

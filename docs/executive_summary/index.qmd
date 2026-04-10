@@ -130,9 +130,13 @@ The table below compares a lightweight baseline evaluation for the two target ch
 
 ## Metrics (Saved Training Runs)
 
-The table below is auto-generated from the saved run metadata in `models/meta_*.json` (refresh via `python docs/executive_summary/tools/generate_model_metrics_md.py`). It reflects the **primary CV score** used during training-time model selection (currently macro-F1 with 5-fold KFold on the sampled training set). Rows with `N/A` indicate a run that did not produce a valid CV score, but are kept for traceability.
+The table below is auto-generated from the saved run metadata in `models/meta_*.json` (refresh via `python docs/executive_summary/tools/generate_model_metrics_md.py`). It reflects the **primary CV score** used during training-time model selection (currently macro-F1). CV folds and split strategy can vary across runs; where available, the table includes the number of folds.
 
 {{< include _includes/model_metrics.md >}}
+
+### Best Model Notes
+
+The “best model” block above is selected strictly by the primary CV metric (macro-F1). Two common ways this can mislead are (1) **high-variance CV** when folds are low, and (2) **split mismatch** (row-level splits vs grouped-by-home splits). For final reporting, keep the split strategy fixed, rerun with enough folds to stabilize the estimate, and include a confusion matrix alongside macro-F1.
 
 <!-- REMOVE_FOR_FINAL:BEGIN validation-caveat -->
 ::: {.callout-warning title="VALIDATION CAVEAT (remove for final)" .remove-for-final}

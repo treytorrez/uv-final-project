@@ -47,6 +47,13 @@ def _fmt_fraction(value: Any) -> str:
     return f"{f:.3f}".rstrip("0").rstrip(".")
 
 
+def _read_json(path: Path) -> dict[str, Any] | None:
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return None
+
+
 def main() -> int:
     repo_root = Path(__file__).resolve().parents[3]
     meta_paths = sorted((repo_root / "models").glob("meta_*.json"))
@@ -65,6 +72,15 @@ def main() -> int:
         classes = meta.get("classes") or []
         details = meta.get("details") or {}
 
+        # Best-effort capture of CV context. Older runs may not record these.
+        cv_scheme = details.get("cv_scheme")
+        cv_folds = details.get("n_folds")
+        checkpoint_path = details.get("checkpoint_path")
+        if cv_folds is None and isinstance(checkpoint_path, str):
+            ck = _read_json(repo_root / checkpoint_path)
+            if isinstance(ck, dict):
+                cv_folds = ck.get("n_folds")
+
         rows.append(
             {
                 "timestamp": ts_str,
@@ -73,11 +89,14 @@ def main() -> int:
                 "target": meta.get("target_column"),
                 "sample_fraction": meta.get("sample_fraction"),
                 "threads": meta.get("train_threads"),
+                "cv_scheme": cv_scheme,
+                "cv_folds": cv_folds,
                 "cv_primary": meta.get("metric_primary_cv"),
                 "train_f1_macro": train_metrics.get("train_f1_macro"),
                 "train_accuracy": train_metrics.get("train_accuracy"),
                 "n_classes": len(classes) if isinstance(classes, list) else None,
                 "best_params": details.get("best_params"),
+                "details": details,
                 "meta_file": path.name,
             }
         )
@@ -119,14 +138,66 @@ def main() -> int:
 
     if best is not None:
         score, r = best
+
+        # Best-model summary block: compact and “editable” (user can add narrative in QMD).
+        best_params = r.get("best_params") if isinstance(r.get("best_params"), dict) else {}
+        details = r.get("details") if isinstance(r.get("details"), dict) else {}
+        rounds = details.get("final_num_boost_round") or details.get("best_num_boost_round")
+        early_stop = details.get("early_stopping_rounds")
+        cv_scheme = r.get("cv_scheme")
+        cv_folds = r.get("cv_folds")
+
+        # Normalize a few common hyperparam names across native vs sklearn.
+        lr = best_params.get("learning_rate")
+        max_depth = best_params.get("max_depth")
+        subsample = best_params.get("subsample")
+        colsample = best_params.get("colsample_bytree")
+        reg_alpha = best_params.get("reg_alpha", best_params.get("alpha"))
+        reg_lambda = best_params.get("reg_lambda", best_params.get("lambda"))
+        min_child_weight = best_params.get("min_child_weight")
+
+        lines.append("### Best model (current leader)")
+        lines.append("")
         lines.append(
-            f"**Best CV macro-F1:** `{_fmt_float(score)}`"
-            f" (`{r.get('api')}` / `{r.get('target')}` at `{r.get('timestamp')}`)"
+            f"- Run: `{r.get('timestamp')}` (`{r.get('api')}` / `{r.get('target')}`, {r.get('n_classes')} classes, sample_fraction={_fmt_fraction(r.get('sample_fraction'))})"
+        )
+        cv_context = []
+        if cv_folds is not None:
+            cv_context.append(f"folds={cv_folds}")
+        if cv_scheme:
+            cv_context.append(str(cv_scheme))
+        cv_suffix = f" ({', '.join(cv_context)})" if cv_context else ""
+        lines.append(f"- CV macro-F1: `{_fmt_float(score)}`{cv_suffix}")
+        lines.append(
+            f"- Train macro-F1: `{_fmt_float(r.get('train_f1_macro'))}`; train accuracy: `{_fmt_float(r.get('train_accuracy'))}`"
+        )
+        if rounds is not None:
+            if early_stop is not None:
+                lines.append(f"- Boosting: `{rounds}` rounds (early_stopping_rounds={early_stop})")
+            else:
+                lines.append(f"- Boosting: `{rounds}` rounds")
+        lines.append(
+            "- Key params: "
+            + ", ".join(
+                [
+                    f"learning_rate={_fmt_float(lr, ndigits=3)}" if lr is not None else "learning_rate=N/A",
+                    f"max_depth={max_depth}" if max_depth is not None else "max_depth=N/A",
+                    f"min_child_weight={min_child_weight}" if min_child_weight is not None else "min_child_weight=N/A",
+                    f"subsample={_fmt_float(subsample, ndigits=3)}" if subsample is not None else "subsample=N/A",
+                    f"colsample_bytree={_fmt_float(colsample, ndigits=3)}" if colsample is not None else "colsample_bytree=N/A",
+                    f"alpha={_fmt_float(reg_alpha, ndigits=3)}" if reg_alpha is not None else "alpha=N/A",
+                    f"lambda={_fmt_float(reg_lambda, ndigits=3)}" if reg_lambda is not None else "lambda=N/A",
+                ]
+            )
+        )
+        lines.append("")
+        lines.append(
+            "> Notes to include (edit in the QMD): why this run is the pick, what split was used, and what the next validation step is."
         )
         lines.append("")
 
-    lines.append("| timestamp | api | target | sample_fraction | threads | cv_macro_f1 | train_macro_f1 | train_accuracy | n_classes | meta_file |")
-    lines.append("|---|---|---|---:|---:|---:|---:|---:|---:|---|")
+    lines.append("| timestamp | api | target | sample_fraction | threads | cv_folds | cv_macro_f1 | train_macro_f1 | train_accuracy | n_classes | meta_file |")
+    lines.append("|---|---|---|---:|---:|---:|---:|---:|---:|---:|---|")
 
     for r in rows:
         lines.append(
@@ -138,6 +209,7 @@ def main() -> int:
                     f"`{r.get('target')}`" if r.get("target") else "N/A",
                     _fmt_fraction(r.get("sample_fraction")),
                     str(r.get("threads") if r.get("threads") is not None else "N/A"),
+                    str(r.get("cv_folds") if r.get("cv_folds") is not None else "N/A"),
                     _fmt_float(r.get("cv_primary")),
                     _fmt_float(r.get("train_f1_macro")),
                     _fmt_float(r.get("train_accuracy")),
@@ -154,4 +226,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

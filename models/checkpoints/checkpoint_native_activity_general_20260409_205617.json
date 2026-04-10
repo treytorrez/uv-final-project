@@ -1,0 +1,53 @@
+{
+  "api": "native",
+  "n_folds": 2,
+  "num_boost_round": 900,
+  "early_stopping_rounds": 40,
+  "learning_rate_override": 0.03,
+  "force_final_rounds": true,
+  "trials_completed": 1,
+  "trial_history": [
+    {
+      "trial": 1,
+      "macro_f1": 0.7771790000000001,
+      "best_rounds": 900,
+      "params": {
+        "objective": "multi:softprob",
+        "num_class": 11,
+        "tree_method": "hist",
+        "learning_rate": 0.03,
+        "max_depth": 6,
+        "min_child_weight": 3,
+        "subsample": 0.8,
+        "colsample_bytree": 0.8,
+        "alpha": 0.1,
+        "lambda": 0.8,
+        "eval_metric": "mlogloss",
+        "seed": 43,
+        "nthread": 15,
+        "verbosity": 3
+      }
+    }
+  ],
+  "best_so_far": {
+    "trial": 1,
+    "macro_f1": 0.7771790000000001,
+    "best_rounds": 900,
+    "params": {
+      "objective": "multi:softprob",
+      "num_class": 11,
+      "tree_method": "hist",
+      "learning_rate": 0.03,
+      "max_depth": 6,
+      "min_child_weight": 3,
+      "subsample": 0.8,
+      "colsample_bytree": 0.8,
+      "alpha": 0.1,
+      "lambda": 0.8,
+      "eval_metric": "mlogloss",
+      "seed": 43,
+      "nthread": 15,
+      "verbosity": 3
+    }
+  }
+}

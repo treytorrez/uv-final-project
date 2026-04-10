@@ -1,0 +1,95 @@
+{
+  "timestamp": "20260409_215520",
+  "api": "sklearn",
+  "target_column": "activity_general",
+  "sample_fraction": 0.001,
+  "train_threads": 12,
+  "metric_primary": "f1_macro",
+  "metric_primary_cv": 0.4814314455938807,
+  "train_metrics": {
+    "train_f1_macro": 0.9295453944236154,
+    "train_f1_weighted": 0.9880193578927408,
+    "train_accuracy": 0.98822631636324
+  },
+  "feature_count": 36,
+  "features": [
+    "lastSensorEventHours",
+    "lastSensorEventSeconds",
+    "lastSensorDayOfWeek",
+    "windowDuration",
+    "timeSinceLastSensorEvent",
+    "prevDominantSensor1",
+    "prevDominantSensor2",
+    "lastSensorID",
+    "lastSensorLocation",
+    "lastMotionLocation",
+    "complexity",
+    "activityChange",
+    "areaTransitions",
+    "numDistinctSensors",
+    "sensorCount-Bathroom",
+    "sensorCount-Bedroom",
+    "sensorCount-Chair",
+    "sensorCount-DiningRoom",
+    "sensorCount-Hall",
+    "sensorCount-Ignore",
+    "sensorCount-Kitchen",
+    "sensorCount-LivingRoom",
+    "sensorCount-Office",
+    "sensorCount-OutsideDoor",
+    "sensorCount-WorkArea",
+    "sensorElTime-Bathroom",
+    "sensorElTime-Bedroom",
+    "sensorElTime-Chair",
+    "sensorElTime-DiningRoom",
+    "sensorElTime-Hall",
+    "sensorElTime-Ignore",
+    "sensorElTime-Kitchen",
+    "sensorElTime-LivingRoom",
+    "sensorElTime-Office",
+    "sensorElTime-OutsideDoor",
+    "sensorElTime-WorkArea"
+  ],
+  "classes": [
+    "Eating",
+    "Home_Transition",
+    "Household",
+    "Hygiene",
+    "Leisure",
+    "Meal_Cleanup",
+    "Meal_Prep",
+    "Medication",
+    "Sleep_Rest",
+    "Work_Study"
+  ],
+  "details": {
+    "best_params": {
+      "subsample": 0.8,
+      "reg_lambda": 1.2,
+      "reg_alpha": 0.0,
+      "n_estimators": 800,
+      "min_child_weight": 5,
+      "max_depth": 6,
+      "learning_rate": 0.03,
+      "colsample_bytree": 0.9
+    },
+    "best_cv_f1_macro": 0.4814314455938807,
+    "trial_scores": [
+      {
+        "trial": 1,
+        "cv_macro_f1_mean": 0.4814314455938807,
+        "params": {
+          "subsample": 0.8,
+          "reg_lambda": 1.2,
+          "reg_alpha": 0.0,
+          "n_estimators": 800,
+          "min_child_weight": 5,
+          "max_depth": 6,
+          "learning_rate": 0.03,
+          "colsample_bytree": 0.9
+        }
+      }
+    ]
+  },
+  "metric_rationale": "Macro-F1 used as primary CV metric to balance precision/recall per class under class imbalance; weighted-F1 and accuracy are reported as secondary diagnostics."
+}

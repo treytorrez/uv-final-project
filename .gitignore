@@ -26,4 +26,6 @@ venv/
 .DS_Store
 
 # Generated artifacts you probably don't want to publish
-models/*nan*
+models/xgb_*nan*
+models/xgb_*.json
+models/xgb_*.pkl

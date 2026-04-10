@@ -160,7 +160,11 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#saved-artifacts" id="toc-saved-artifacts" class="nav-link" data-scroll-target="#saved-artifacts">Saved Artifacts</a></li>
   </ul></li>
   <li><a href="#key-results-quick-baseline" id="toc-key-results-quick-baseline" class="nav-link" data-scroll-target="#key-results-quick-baseline">Key Results (Quick Baseline)</a></li>
-  <li><a href="#metrics-saved-training-runs" id="toc-metrics-saved-training-runs" class="nav-link" data-scroll-target="#metrics-saved-training-runs">Metrics (Saved Training Runs)</a></li>
+  <li><a href="#metrics-saved-training-runs" id="toc-metrics-saved-training-runs" class="nav-link" data-scroll-target="#metrics-saved-training-runs">Metrics (Saved Training Runs)</a>
+  <ul class="collapse">
+  <li><a href="#best-model-current-leader" id="toc-best-model-current-leader" class="nav-link" data-scroll-target="#best-model-current-leader">Best model (current leader)</a></li>
+  <li><a href="#best-model-notes" id="toc-best-model-notes" class="nav-link" data-scroll-target="#best-model-notes">Best Model Notes</a></li>
+  </ul></li>
   <li><a href="#risks-limitations-and-what-would-make-it-better" id="toc-risks-limitations-and-what-would-make-it-better" class="nav-link" data-scroll-target="#risks-limitations-and-what-would-make-it-better">Risks, Limitations, and What Would Make It Better</a></li>
   <li><a href="#recommendation" id="toc-recommendation" class="nav-link" data-scroll-target="#recommendation">Recommendation</a></li>
   <li><a href="#render-publish" id="toc-render-publish" class="nav-link" data-scroll-target="#render-publish">Render &amp; Publish</a>
@@ -364,22 +368,34 @@ models/meta_sklearn_&lt;target&gt;_f1_macro_&lt;score&gt;_&lt;timestamp&gt;.json
 </section>
 <section id="metrics-saved-training-runs" class="level2">
 <h2 class="anchored" data-anchor-id="metrics-saved-training-runs">Metrics (Saved Training Runs)</h2>
-<p>The table below is auto-generated from the saved run metadata in <code>models/meta_*.json</code> (refresh via <code>python docs/executive_summary/tools/generate_model_metrics_md.py</code>). It reflects the <strong>primary CV score</strong> used during training-time model selection (currently macro-F1 with 5-fold KFold on the sampled training set). Rows with <code>N/A</code> indicate a run that did not produce a valid CV score, but are kept for traceability.</p>
+<p>The table below is auto-generated from the saved run metadata in <code>models/meta_*.json</code> (refresh via <code>python docs/executive_summary/tools/generate_model_metrics_md.py</code>). It reflects the <strong>primary CV score</strong> used during training-time model selection (currently macro-F1). CV folds and split strategy can vary across runs; where available, the table includes the number of folds.</p>
 <!-- AUTO-GENERATED: docs/executive_summary/tools/generate_model_metrics_md.py -->
-<!-- Generated: 2026-04-09 20:38:18 MDT -->
-<p><strong>Best CV macro-F1:</strong> <code>0.6221</code> (<code>sklearn</code> / <code>activity_general</code> at <code>20260408_221358</code>)</p>
+<!-- Generated: 2026-04-09 22:00:09 MDT -->
+<section id="best-model-current-leader" class="level3">
+<h3 class="anchored" data-anchor-id="best-model-current-leader">Best model (current leader)</h3>
+<ul>
+<li>Run: <code>20260409_214833</code> (<code>native</code> / <code>activity_general</code>, 11 classes, sample_fraction=0.4)</li>
+<li>CV macro-F1: <code>0.7772</code> (folds=2)</li>
+<li>Train macro-F1: <code>0.8088</code>; train accuracy: <code>0.8304</code></li>
+<li>Boosting: <code>900</code> rounds (early_stopping_rounds=40)</li>
+<li>Key params: learning_rate=0.030, max_depth=6, min_child_weight=3, subsample=0.800, colsample_bytree=0.800, alpha=0.100, lambda=0.800</li>
+</ul>
+<blockquote class="blockquote">
+<p>Notes to include (edit in the QMD): why this run is the pick, what split was used, and what the next validation step is.</p>
+</blockquote>
 <table class="caption-top table">
 <colgroup>
-<col style="width: 8%">
-<col style="width: 8%">
-<col style="width: 8%">
-<col style="width: 11%">
-<col style="width: 11%">
-<col style="width: 11%">
-<col style="width: 11%">
-<col style="width: 11%">
-<col style="width: 11%">
-<col style="width: 8%">
+<col style="width: 7%">
+<col style="width: 7%">
+<col style="width: 7%">
+<col style="width: 10%">
+<col style="width: 10%">
+<col style="width: 10%">
+<col style="width: 10%">
+<col style="width: 10%">
+<col style="width: 10%">
+<col style="width: 10%">
+<col style="width: 7%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -388,6 +404,7 @@ models/meta_sklearn_&lt;target&gt;_f1_macro_&lt;score&gt;_&lt;timestamp&gt;.json
 <th>target</th>
 <th style="text-align: right;">sample_fraction</th>
 <th style="text-align: right;">threads</th>
+<th style="text-align: right;">cv_folds</th>
 <th style="text-align: right;">cv_macro_f1</th>
 <th style="text-align: right;">train_macro_f1</th>
 <th style="text-align: right;">train_accuracy</th>
@@ -397,59 +414,103 @@ models/meta_sklearn_&lt;target&gt;_f1_macro_&lt;score&gt;_&lt;timestamp&gt;.json
 </thead>
 <tbody>
 <tr class="odd">
+<td><code>20260409_215520</code></td>
+<td><code>sklearn</code></td>
+<td><code>activity_general</code></td>
+<td style="text-align: right;">0.001</td>
+<td style="text-align: right;">12</td>
+<td style="text-align: right;">N/A</td>
+<td style="text-align: right;">0.4814</td>
+<td style="text-align: right;">0.9295</td>
+<td style="text-align: right;">0.9882</td>
+<td style="text-align: right;">10</td>
+<td><code>meta_sklearn_activity_general_f1_macro_0.4814_20260409_215520.json</code></td>
+</tr>
+<tr class="even">
+<td><code>20260409_215447</code></td>
+<td><code>native</code></td>
+<td><code>activity_general</code></td>
+<td style="text-align: right;">0.001</td>
+<td style="text-align: right;">12</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">0.4445</td>
+<td style="text-align: right;">0.5499</td>
+<td style="text-align: right;">0.7474</td>
+<td style="text-align: right;">10</td>
+<td><code>meta_native_activity_general_f1_macro_0.4445_20260409_215447.json</code></td>
+</tr>
+<tr class="odd">
+<td><code>20260409_214833</code></td>
+<td><code>native</code></td>
+<td><code>activity_general</code></td>
+<td style="text-align: right;">0.4</td>
+<td style="text-align: right;">15</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">0.7772</td>
+<td style="text-align: right;">0.8088</td>
+<td style="text-align: right;">0.8304</td>
+<td style="text-align: right;">11</td>
+<td><code>meta_native_activity_general_f1_macro_0.7772_20260409_214833.json</code></td>
+</tr>
+<tr class="even">
 <td><code>20260408_221512</code></td>
 <td><code>native</code></td>
 <td><code>activity_general</code></td>
 <td style="text-align: right;">0.005</td>
 <td style="text-align: right;">12</td>
+<td style="text-align: right;">N/A</td>
 <td style="text-align: right;">0.5829</td>
 <td style="text-align: right;">0.7615</td>
 <td style="text-align: right;">0.8591</td>
 <td style="text-align: right;">11</td>
 <td><code>meta_native_activity_general_f1_macro_0.5829_20260408_221512.json</code></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><code>20260408_221358</code></td>
 <td><code>sklearn</code></td>
 <td><code>activity_general</code></td>
 <td style="text-align: right;">0.01</td>
 <td style="text-align: right;">12</td>
+<td style="text-align: right;">N/A</td>
 <td style="text-align: right;">0.6221</td>
 <td style="text-align: right;">0.7607</td>
 <td style="text-align: right;">0.8638</td>
 <td style="text-align: right;">11</td>
 <td><code>meta_sklearn_activity_general_f1_macro_0.6221_20260408_221358.json</code></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><code>20260408_221101</code></td>
 <td><code>sklearn</code></td>
 <td><code>activity_general</code></td>
 <td style="text-align: right;">0.01</td>
 <td style="text-align: right;">12</td>
 <td style="text-align: right;">N/A</td>
+<td style="text-align: right;">N/A</td>
 <td style="text-align: right;">0.7607</td>
 <td style="text-align: right;">0.8638</td>
 <td style="text-align: right;">11</td>
 <td><code>meta_sklearn_activity_general_f1_macro_nan_20260408_221101.json</code></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><code>20260408_215912</code></td>
 <td><code>native</code></td>
 <td><code>activity_general</code></td>
 <td style="text-align: right;">0.005</td>
 <td style="text-align: right;">12</td>
+<td style="text-align: right;">N/A</td>
 <td style="text-align: right;">0.5938</td>
 <td style="text-align: right;">0.7583</td>
 <td style="text-align: right;">0.8563</td>
 <td style="text-align: right;">11</td>
 <td><code>meta_native_activity_general_f1_macro_0.5938_20260408_215912.json</code></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><code>20260408_215753</code></td>
 <td><code>sklearn</code></td>
 <td><code>activity_general</code></td>
 <td style="text-align: right;">0.01</td>
 <td style="text-align: right;">12</td>
+<td style="text-align: right;">N/A</td>
 <td style="text-align: right;">0.6157</td>
 <td style="text-align: right;">0.7607</td>
 <td style="text-align: right;">0.8638</td>
@@ -458,6 +519,10 @@ models/meta_sklearn_&lt;target&gt;_f1_macro_&lt;score&gt;_&lt;timestamp&gt;.json
 </tr>
 </tbody>
 </table>
+</section>
+<section id="best-model-notes" class="level3">
+<h3 class="anchored" data-anchor-id="best-model-notes">Best Model Notes</h3>
+<p>The “best model” block above is selected strictly by the primary CV metric (macro-F1). Two common ways this can mislead are (1) <strong>high-variance CV</strong> when folds are low, and (2) <strong>split mismatch</strong> (row-level splits vs grouped-by-home splits). For final reporting, keep the split strategy fixed, rerun with enough folds to stabilize the estimate, and include a confusion matrix alongside macro-F1.</p>
 <!-- REMOVE_FOR_FINAL:BEGIN validation-caveat -->
 <div class="remove-for-final callout callout-style-default callout-warning callout-titled" title="VALIDATION CAVEAT (remove for final)">
 <div class="callout-header d-flex align-content-center">
@@ -473,6 +538,7 @@ VALIDATION CAVEAT (remove for final)
 </div>
 </div>
 <!-- REMOVE_FOR_FINAL:END validation-caveat -->
+</section>
 </section>
 <section id="risks-limitations-and-what-would-make-it-better" class="level2">
 <h2 class="anchored" data-anchor-id="risks-limitations-and-what-would-make-it-better">Risks, Limitations, and What Would Make It Better</h2>
