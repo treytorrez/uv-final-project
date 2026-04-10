@@ -28,6 +28,10 @@ jobs:
       - name: Set Up Quarto
         uses: quarto-dev/quarto-actions/setup@v2
 
+      - name: Install TinyTeX (PDF)
+        run: |
+          quarto install tinytex --no-prompt
+
       - name: Generate Metrics Table
         run: |
           python docs/executive_summary/tools/generate_model_metrics_md.py

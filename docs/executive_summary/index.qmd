@@ -9,6 +9,13 @@ format:
     toc-depth: 3
     number-sections: false
     page-layout: full
+  pdf:
+    toc: true
+    toc-depth: 3
+    number-sections: false
+    geometry: margin=1in
+    colorlinks: true
+    pdf-engine: lualatex
 ---
 
 ::: {.es-metrics}

@@ -10,6 +10,8 @@ website:
     left:
       - text: "Summary"
         href: index.qmd
+      - text: "PDF"
+        href: index.pdf
 
 format:
   html:
